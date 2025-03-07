@@ -1,0 +1,72 @@
+---
+# Molecule scenario: dns_dhcp
+#
+# Tests DHCP reservations, A records (IPv4), AAAA records (IPv6),
+# and CNAME records against a real Pi-hole instance in Docker.
+#
+# Requirements:
+#   pip install molecule molecule-plugins[docker]
+#
+# The wzzrd.pihole collection must be reachable by Ansible.
+# Install it to the default path before running:
+#   ansible-galaxy collection install . --upgrade
+#
+# Usage:
+#   molecule test -s dns_dhcp
+#   PIHOLE_VERSION=2024.07.0 molecule test -s dns_dhcp
+
+dependency:
+  name: galaxy
+  options:
+    ignore-certs: true
+    ignore-errors: true
+
+driver:
+  name: podman
+
+platforms:
+  - name: pihole-dns-dhcp
+    image: "docker.io/pihole/pihole:${PIHOLE_VERSION:-latest}"
+    env:
+      FTLCONF_webserver_api_password: "molecule_test_password"
+      FTLCONF_dns_upstreams: "8.8.8.8;8.8.4.4"
+      FTLCONF_dns_listeningMode: ALL
+      FTLCONF_dhcp_active: true
+      FTLCONF_dhcp_start: 192.168.88.2
+      FTLCONF_dhcp_end: 192.168.88.250
+      FTLCONF_dhcp_router: 192.168.88.1
+      FTLCONF_dhcp_netmask: 255.255.255.0
+      FTLCONF_dns_domain: acme.lab
+      TZ: "UTC"
+    published_ports:
+      - "127.0.0.1:8080:80/tcp"
+    capabilities:
+      - NET_ADMIN
+      - CAP_SETUID
+      - CAP_SETGID
+
+provisioner:
+  name: ansible
+  log: true
+  env:
+    ANSIBLE_COLLECTIONS_PATHS: "${HOME}/.ansible/collections:/usr/share/ansible/collections"
+  inventory:
+    hosts:
+      all:
+        hosts:
+          localhost:
+            ansible_connection: local
+            pihole_url: "http://localhost:8080"
+            pihole_password: "molecule_test_password"
+
+verifier:
+  name: ansible
+
+scenario:
+  name: dns_dhcp
+  test_sequence:
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy

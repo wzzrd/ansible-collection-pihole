@@ -1,0 +1,24 @@
+---
+# Wait for the Pi-hole API to become available and pre-configure DHCP
+# so the dhcp_reservation module has something to work against.
+
+- name: Prepare Pi-hole for DNS/DHCP testing
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    pihole_url: "http://localhost:8080"
+    pihole_password: "molecule_test_password"
+
+  tasks:
+    - name: Wait for Pi-hole API to become reachable
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/auth"
+        method: GET
+        status_code: [200, 401, 403]
+        timeout: 5
+      register: _pihole_ready
+      until: _pihole_ready.status in [200, 401, 403]
+      retries: 36
+      delay: 5

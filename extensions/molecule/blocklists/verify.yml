@@ -1,0 +1,304 @@
+---
+# Verify playbook for the blocklists scenario.
+#
+# Re-runs every converge task in check_mode and asserts nothing changed
+# (idempotency), then spot-checks the Pi-hole API for expected objects.
+
+- name: Verify groups, clients, adlists and domain entries
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8081"
+    pihole_password: "molecule_test_password"
+
+    pihole_groups:
+      - name: "IoT"
+        comment: "Smart home and IoT devices"
+        enabled: true
+      - name: "Kids"
+        comment: "Children's devices – stricter ad and content blocking"
+        enabled: true
+      - name: "Trusted"
+        comment: "Work devices with minimal blocking"
+        enabled: true
+      - name: "Guests"
+        comment: "Guest Wi-Fi segment"
+        enabled: true
+
+    pihole_clients:
+      - client: "192.168.88.50"
+        comment: "Raspberry Pi Camera (IoT)"
+        groups: ["IoT"]
+      - client: "de:ad:be:ef:00:07"
+        comment: "Kids Tablet"
+        groups: ["Kids"]
+      - client: "192.168.88.30"
+        comment: "Work Laptop"
+        groups: ["Trusted"]
+      - client: "192.168.88.128/25"
+        comment: "Guest subnet (second half of 192.168.88.0/24)"
+        groups: ["Guests"]
+
+    pihole_adlists:
+      - address: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+        type: block
+        comment: "StevenBlack unified hosts – ads + malware"
+        groups: ["Default"]
+        enabled: true
+      - address: "https://big.oisd.nl"
+        type: block
+        comment: "OISD big blocklist – IoT telemetry and trackers"
+        groups: ["IoT"]
+        enabled: true
+      - address: "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt"
+        type: block
+        comment: "HaGeZi Pro – comprehensive kids safe-browsing list"
+        groups: ["Kids"]
+        enabled: true
+      - address: "https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt"
+        type: allow
+        comment: "anudeepND common allowlist – prevent false positives"
+        groups: ["Default"]
+        enabled: true
+
+    pihole_deny_domains:
+      - domain: "ads.acme-tracker.lab"
+        type: deny
+        kind: exact
+        comment: "Internal analytics tracker – block all groups"
+        groups: ["Default"]
+      - domain: "telemetry.acme-apps.lab"
+        type: deny
+        kind: exact
+        comment: "App telemetry endpoint – block all groups"
+        groups: ["Default"]
+      - domain: "^.*\\.tracking\\.acme\\.lab$"
+        type: deny
+        kind: regex
+        comment: "Block all tracking subdomains under acme.lab"
+        groups: ["Default"]
+
+    pihole_allow_domains:
+      - domain: "updates.firmware.acme.lab"
+        type: allow
+        kind: exact
+        comment: "Firmware update endpoint for IoT devices"
+        groups: ["IoT"]
+      - domain: "cdn.trusted-content.acme.lab"
+        type: allow
+        kind: exact
+        comment: "Internal CDN used by work applications"
+        groups: ["Trusted"]
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: true
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Groups – idempotency                                                 #
+    # ------------------------------------------------------------------ #
+    - name: Verify groups are idempotent (check mode)
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "{{ item.name }}"
+        comment: "{{ item.comment }}"
+        enabled: "{{ item.enabled }}"
+        state: present
+      loop: "{{ pihole_groups }}"
+      loop_control:
+        label: "{{ item.name }}"
+      check_mode: true
+      register: _groups_check
+
+    - name: Assert groups report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          Group '{{ item.item.name }}' reported changed=true –
+          it may be missing or have incorrect properties.
+        success_msg: "Group '{{ item.item.name }}' is idempotent."
+      loop: "{{ _groups_check.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    # ------------------------------------------------------------------ #
+    # Clients – idempotency                                                #
+    # ------------------------------------------------------------------ #
+    - name: Verify clients are idempotent (check mode)
+      wzzrd.pihole.client:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        client: "{{ item.client }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        state: present
+      loop: "{{ pihole_clients }}"
+      loop_control:
+        label: "{{ item.comment }}"
+      check_mode: true
+      register: _clients_check
+
+    - name: Assert clients report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          Client '{{ item.item.client }}' reported changed=true –
+          it may be missing or have incorrect group/comment.
+        success_msg: "Client '{{ item.item.client }}' is idempotent."
+      loop: "{{ _clients_check.results }}"
+      loop_control:
+        label: "{{ item.item.client }}"
+
+    # ------------------------------------------------------------------ #
+    # Adlists – idempotency                                                #
+    # ------------------------------------------------------------------ #
+    - name: Verify adlists are idempotent (check mode)
+      wzzrd.pihole.adlist:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        address: "{{ item.address }}"
+        type: "{{ item.type }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        enabled: "{{ item.enabled }}"
+        state: present
+      loop: "{{ pihole_adlists }}"
+      loop_control:
+        label: "{{ item.comment }}"
+      check_mode: true
+      register: _adlists_check
+
+    - name: Assert adlists report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          Adlist '{{ item.item.address }}' reported changed=true –
+          it may be missing or have incorrect properties.
+        success_msg: "Adlist '{{ item.item.address | urlsplit('path') | basename }}' is idempotent."
+      loop: "{{ _adlists_check.results }}"
+      loop_control:
+        label: "{{ item.item.comment }}"
+
+    # ------------------------------------------------------------------ #
+    # Deny domains – idempotency                                           #
+    # ------------------------------------------------------------------ #
+    - name: Verify deny domains are idempotent (check mode)
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "{{ item.domain }}"
+        type: "{{ item.type }}"
+        kind: "{{ item.kind }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        state: present
+      loop: "{{ pihole_deny_domains }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      check_mode: true
+      register: _deny_check
+
+    - name: Assert deny domains report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          Deny domain '{{ item.item.domain }}' ({{ item.item.kind }})
+          reported changed=true – it may be missing.
+        success_msg: "Deny domain '{{ item.item.domain }}' is idempotent."
+      loop: "{{ _deny_check.results }}"
+      loop_control:
+        label: "{{ item.item.domain }}"
+
+    # ------------------------------------------------------------------ #
+    # Allow domains – idempotency                                          #
+    # ------------------------------------------------------------------ #
+    - name: Verify allow domains are idempotent (check mode)
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "{{ item.domain }}"
+        type: "{{ item.type }}"
+        kind: "{{ item.kind }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        state: present
+      loop: "{{ pihole_allow_domains }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      check_mode: true
+      register: _allow_check
+
+    - name: Assert allow domains report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          Allow domain '{{ item.item.domain }}' ({{ item.item.kind }})
+          reported changed=true – it may be missing.
+        success_msg: "Allow domain '{{ item.item.domain }}' is idempotent."
+      loop: "{{ _allow_check.results }}"
+      loop_control:
+        label: "{{ item.item.domain }}"
+
+    # ------------------------------------------------------------------ #
+    # Spot-check via Pi-hole API                                           #
+    # ------------------------------------------------------------------ #
+    - name: Retrieve groups list from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/groups"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _groups_api
+
+    - name: Assert all expected groups appear in the API response
+      ansible.builtin.assert:
+        that: >-
+          pihole_groups | map(attribute='name') | list
+          | difference(_groups_api.json.groups | map(attribute='name') | list)
+          | length == 0
+        fail_msg: >-
+          One or more groups are missing from the Pi-hole API response.
+          Expected: {{ pihole_groups | map(attribute='name') | list }}
+          Got: {{ _groups_api.json.groups | map(attribute='name') | list }}
+        success_msg: "All expected groups are present in Pi-hole."
+
+    - name: Retrieve adlists from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/lists"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _lists_api
+
+    - name: Assert at least one blocklist and one allowlist are configured
+      ansible.builtin.assert:
+        that:
+          - >-
+            _lists_api.json.lists
+            | selectattr('type', 'equalto', 'block')
+            | list | length >= 1
+          - >-
+            _lists_api.json.lists
+            | selectattr('type', 'equalto', 'allow')
+            | list | length >= 1
+        fail_msg: "Pi-hole API did not return the expected mix of block/allow adlists."
+        success_msg: >-
+          Pi-hole has
+          {{ _lists_api.json.lists | selectattr('type', 'equalto', 'block') | list | length }} blocklist(s)
+          and
+          {{ _lists_api.json.lists | selectattr('type', 'equalto', 'allow') | list | length }} allowlist(s).

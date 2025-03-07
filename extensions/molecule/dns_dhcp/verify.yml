@@ -1,0 +1,224 @@
+---
+# Verify playbook for the dns_dhcp scenario.
+#
+# Re-runs every converge task in check_mode and asserts that nothing
+# is reported as changed (idempotency check).  Also verifies the
+# Pi-hole API directly to confirm each record is actually stored.
+
+- name: Verify DNS/DHCP records – idempotency and presence
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+
+    pihole_url: "http://localhost:8080"
+    pihole_password: "molecule_test_password"
+
+    dhcp_reservations:
+      - hw: "de:ad:be:ef:00:01"
+        ip: "192.168.88.10"
+        name: "nas01.acme.lab"
+      - hw: "de:ad:be:ef:00:02"
+        ip: "192.168.88.20"
+        name: "workstation.acme.lab"
+      - hw: "de:ad:be:ef:00:03"
+        ip: "192.168.88.30"
+        name: "laptop.acme.lab"
+      - hw: "de:ad:be:ef:00:04"
+        ip: "192.168.88.40"
+        name: "printer.acme.lab"
+      - hw: "de:ad:be:ef:00:05"
+        ip: "192.168.88.50"
+        name: "rpi-cam.acme.lab"
+
+    a_records:
+      - ip: "192.168.88.5"
+        name: "pihole.acme.lab"
+      - ip: "192.168.88.10"
+        name: "nas01.acme.lab"
+      - ip: "192.168.88.20"
+        name: "workstation.acme.lab"
+      - ip: "192.168.88.30"
+        name: "laptop.acme.lab"
+      - ip: "192.168.88.40"
+        name: "printer.acme.lab"
+      - ip: "192.168.88.50"
+        name: "rpi-cam.acme.lab"
+
+    aaaa_records:
+      - ip: "fd00:dead:beef::5"
+        name: "pihole.acme.lab"
+      - ip: "fd00:dead:beef::10"
+        name: "nas01.acme.lab"
+      - ip: "fd00:dead:beef::20"
+        name: "workstation.acme.lab"
+
+    cname_records:
+      - cname: "files.acme.lab"
+        name: "nas01.acme.lab"
+      - cname: "print.acme.lab"
+        name: "printer.acme.lab"
+      - cname: "cam.acme.lab"
+        name: "rpi-cam.acme.lab"
+      - cname: "desk.acme.lab"
+        name: "workstation.acme.lab"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: true
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # DHCP idempotency                                                     #
+    # ------------------------------------------------------------------ #
+    - name: Verify DHCP reservations are idempotent (check mode)
+      wzzrd.pihole.dhcp_reservation:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        hw: "{{ item.hw }}"
+        ip: "{{ item.ip }}"
+        name: "{{ item.name }}"
+        state: present
+      loop: "{{ dhcp_reservations }}"
+      loop_control:
+        label: "{{ item.name }}"
+      check_mode: true
+      register: _dhcp_check
+
+    - name: Assert DHCP reservations report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          DHCP reservation for {{ item.item.name }} ({{ item.item.ip }})
+          reported changed=true – record may be missing or incorrect.
+        success_msg: "DHCP reservation for {{ item.item.name }} is idempotent."
+      loop: "{{ _dhcp_check.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    # ------------------------------------------------------------------ #
+    # A record idempotency                                                 #
+    # ------------------------------------------------------------------ #
+    - name: Verify A records are idempotent (check mode)
+      wzzrd.pihole.dns_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        ip: "{{ item.ip }}"
+        name: "{{ item.name }}"
+        state: present
+        unique: true
+      loop: "{{ a_records }}"
+      loop_control:
+        label: "{{ item.name }}"
+      check_mode: true
+      register: _a_check
+
+    - name: Assert A records report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          A record {{ item.item.name }} -> {{ item.item.ip }}
+          reported changed=true – record may be missing.
+        success_msg: "A record {{ item.item.name }} is idempotent."
+      loop: "{{ _a_check.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    # ------------------------------------------------------------------ #
+    # AAAA record idempotency                                              #
+    # ------------------------------------------------------------------ #
+    - name: Verify AAAA records are idempotent (check mode)
+      wzzrd.pihole.dns_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        ip: "{{ item.ip }}"
+        name: "{{ item.name }}"
+        state: present
+        unique: false
+      loop: "{{ aaaa_records }}"
+      loop_control:
+        label: "{{ item.name }}"
+      check_mode: true
+      register: _aaaa_check
+
+    - name: Assert AAAA records report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          AAAA record {{ item.item.name }} -> {{ item.item.ip }}
+          reported changed=true – record may be missing.
+        success_msg: "AAAA record {{ item.item.name }} is idempotent."
+      loop: "{{ _aaaa_check.results }}"
+      loop_control:
+        label: "{{ item.item.name }}"
+
+    # ------------------------------------------------------------------ #
+    # CNAME idempotency                                                    #
+    # ------------------------------------------------------------------ #
+    - name: Verify CNAME records are idempotent (check mode)
+      wzzrd.pihole.cname_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        cname: "{{ item.cname }}"
+        name: "{{ item.name }}"
+        state: present
+        unique: true
+      loop: "{{ cname_records }}"
+      loop_control:
+        label: "{{ item.cname }}"
+      check_mode: true
+      register: _cname_check
+
+    - name: Assert CNAME records report no changes
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          CNAME record {{ item.item.cname }} -> {{ item.item.name }}
+          reported changed=true – record may be missing.
+        success_msg: "CNAME record {{ item.item.cname }} is idempotent."
+      loop: "{{ _cname_check.results }}"
+      loop_control:
+        label: "{{ item.item.cname }}"
+
+    # ------------------------------------------------------------------ #
+    # Spot-check via Pi-hole API: confirm static DNS list is non-empty    #
+    # ------------------------------------------------------------------ #
+    - name: Retrieve all static DNS records from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/config/dns/hosts"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _dns_api_response
+
+    - name: Assert at least one static DNS record is present in Pi-hole
+      ansible.builtin.assert:
+        that: (_dns_api_response.json.config.dns.hosts | default([])) | length > 0
+        fail_msg: "Pi-hole API returned no static DNS records – converge may have failed silently."
+        success_msg: "Pi-hole reports {{ (_dns_api_response.json.config.dns.hosts | default([])) | length }} static DNS record(s)."
+
+    - name: Retrieve all CNAME records from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/config/dns/cnameRecords"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _cname_api_response
+
+    - name: Assert at least one CNAME record is present in Pi-hole
+      ansible.builtin.assert:
+        that: (_cname_api_response.json.config.dns.cnameRecords | default([])) | length > 0
+        fail_msg: "Pi-hole API returned no CNAME records – converge may have failed silently."
+        success_msg: "Pi-hole reports {{ (_cname_api_response.json.config.dns.cnameRecords | default([])) | length }} CNAME record(s)."

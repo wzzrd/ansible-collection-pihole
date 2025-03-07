@@ -1,0 +1,233 @@
+---
+# Converge playbook for the blocklists scenario.
+#
+# Fictitious organisation: Acme Labs
+# Network: 192.168.88.0/24, domain acme.lab
+#
+# Groups:
+#   IoT        – smart home / IoT devices
+#   Kids       – children's devices (stricter blocking)
+#   Trusted    – work devices (minimal blocking)
+#   Guests     – guest Wi-Fi segment
+#
+# Clients:
+#   192.168.88.50       – rpi-cam (IoT)
+#   de:ad:be:ef:00:07   – kids' tablet (Kids)
+#   192.168.88.30       – work laptop (Trusted)
+#   192.168.88.128/25   – guest subnet (Guests)
+#
+# Adlists:
+#   StevenBlack hosts   – block, Default
+#   OISD big list       – block, IoT
+#   HaGeZi Pro list     – block, Kids
+#   anudeepND whitelist – allow, Default
+#
+# Individual domains:
+#   ads.acme-tracker.lab         – deny  / exact  / Default
+#   telemetry.acme-apps.lab      – deny  / exact  / Default
+#   ^.*\.tracking\.acme\.lab$    – deny  / regex  / Default
+#   updates.firmware.acme.lab    – allow / exact  / IoT
+#   cdn.trusted-content.acme.lab – allow / exact  / Trusted
+
+- name: Converge – groups, clients, adlists and domain entries
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8081"
+    pihole_password: "molecule_test_password"
+
+    # ------------------------------------------------------------------ #
+    # Groups                                                               #
+    # ------------------------------------------------------------------ #
+    pihole_groups:
+      - name: "IoT"
+        comment: "Smart home and IoT devices"
+        enabled: true
+      - name: "Kids"
+        comment: "Children's devices – stricter ad and content blocking"
+        enabled: true
+      - name: "Trusted"
+        comment: "Work devices with minimal blocking"
+        enabled: true
+      - name: "Guests"
+        comment: "Guest Wi-Fi segment"
+        enabled: true
+
+    # ------------------------------------------------------------------ #
+    # Clients                                                              #
+    # ------------------------------------------------------------------ #
+    pihole_clients:
+      - client: "192.168.88.50"
+        comment: "Raspberry Pi Camera (IoT)"
+        groups: ["IoT"]
+      - client: "de:ad:be:ef:00:07"
+        comment: "Kids Tablet"
+        groups: ["Kids"]
+      - client: "192.168.88.30"
+        comment: "Work Laptop"
+        groups: ["Trusted"]
+      - client: "192.168.88.128/25"
+        comment: "Guest subnet (second half of 192.168.88.0/24)"
+        groups: ["Guests"]
+
+    # ------------------------------------------------------------------ #
+    # Adlists                                                              #
+    # ------------------------------------------------------------------ #
+    pihole_adlists:
+      - address: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+        type: block
+        comment: "StevenBlack unified hosts – ads + malware"
+        groups: ["Default"]
+        enabled: true
+      - address: "https://big.oisd.nl"
+        type: block
+        comment: "OISD big blocklist – IoT telemetry and trackers"
+        groups: ["IoT"]
+        enabled: true
+      - address: "https://raw.githubusercontent.com/hagezi/dns-blocklists/main/adblock/pro.txt"
+        type: block
+        comment: "HaGeZi Pro – comprehensive kids safe-browsing list"
+        groups: ["Kids"]
+        enabled: true
+      - address: "https://raw.githubusercontent.com/anudeepND/whitelist/master/domains/whitelist.txt"
+        type: allow
+        comment: "anudeepND common allowlist – prevent false positives"
+        groups: ["Default"]
+        enabled: true
+
+    # ------------------------------------------------------------------ #
+    # Individual domains                                                   #
+    # ------------------------------------------------------------------ #
+    pihole_deny_domains:
+      - domain: "ads.acme-tracker.lab"
+        type: deny
+        kind: exact
+        comment: "Internal analytics tracker – block all groups"
+        groups: ["Default"]
+      - domain: "telemetry.acme-apps.lab"
+        type: deny
+        kind: exact
+        comment: "App telemetry endpoint – block all groups"
+        groups: ["Default"]
+      - domain: "^.*\\.tracking\\.acme\\.lab$"
+        type: deny
+        kind: regex
+        comment: "Block all tracking subdomains under acme.lab"
+        groups: ["Default"]
+
+    pihole_allow_domains:
+      - domain: "updates.firmware.acme.lab"
+        type: allow
+        kind: exact
+        comment: "Firmware update endpoint for IoT devices"
+        groups: ["IoT"]
+      - domain: "cdn.trusted-content.acme.lab"
+        type: allow
+        kind: exact
+        comment: "Internal CDN used by work applications"
+        groups: ["Trusted"]
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: true
+
+    # ------------------------------------------------------------------ #
+    # Groups                                                               #
+    # ------------------------------------------------------------------ #
+    - name: Ensure groups are present
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "{{ item.name }}"
+        comment: "{{ item.comment }}"
+        enabled: "{{ item.enabled }}"
+        state: present
+      loop: "{{ pihole_groups }}"
+      loop_control:
+        label: "{{ item.name }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Clients                                                              #
+    # ------------------------------------------------------------------ #
+    - name: Ensure clients are configured
+      wzzrd.pihole.client:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        client: "{{ item.client }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        state: present
+      loop: "{{ pihole_clients }}"
+      loop_control:
+        label: "{{ item.comment }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Adlists (block and allow)                                            #
+    # ------------------------------------------------------------------ #
+    - name: Ensure adlists are configured
+      wzzrd.pihole.adlist:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        address: "{{ item.address }}"
+        type: "{{ item.type }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        enabled: "{{ item.enabled }}"
+        state: present
+      loop: "{{ pihole_adlists }}"
+      loop_control:
+        label: "{{ item.comment }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Individual deny domains                                              #
+    # ------------------------------------------------------------------ #
+    - name: Ensure deny domains are present
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "{{ item.domain }}"
+        type: "{{ item.type }}"
+        kind: "{{ item.kind }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        state: present
+      loop: "{{ pihole_deny_domains }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Individual allow domains                                             #
+    # ------------------------------------------------------------------ #
+    - name: Ensure allow domains are present
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "{{ item.domain }}"
+        type: "{{ item.type }}"
+        kind: "{{ item.kind }}"
+        comment: "{{ item.comment }}"
+        groups: "{{ item.groups }}"
+        state: present
+      loop: "{{ pihole_allow_domains }}"
+      loop_control:
+        label: "{{ item.domain }}"
+      retries: 5
+      delay: 5
