@@ -23,8 +23,6 @@ dependency:
 
 driver:
   name: podman
-  options:
-    podman_socket: unix:///run/podman/podman.sock
 
 platforms:
   - name: pihole-blocklists

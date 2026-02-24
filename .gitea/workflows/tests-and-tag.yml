@@ -40,14 +40,9 @@ jobs:
   lint:
     name: Ansible Lint
     runs-on: ubi9-aarch64-ansible
-    container:
-      image: quay.thuisnet.com/gitea/ansible-ci-runner:latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
-      - name: Install collection under test
-        run: ansible-galaxy collection install . --upgrade
 
       - name: Run ansible-lint
         run: ansible-lint -v
@@ -65,13 +60,19 @@ jobs:
       - name: Run pytest
         run: pytest tests/unit/ -v --tb=short --color=yes
 
+  black:
+    name: Python Formatting (black)
+    runs-on: ubi9-aarch64-ansible
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run black
+        run: black --check plugins/ tests/
+
   molecule:
     name: Integration Tests (Molecule) – ${{ matrix.scenario }}
     runs-on: ubi9-aarch64-ansible
-    container:
-      image: quay.thuisnet.com/gitea/ansible-ci-runner:latest
-      env:
-        DOCKER_HOST: unix:///run/podman/podman.sock
     strategy:
       fail-fast: false
       matrix:
@@ -82,15 +83,12 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install collection under test
-        run: ansible-galaxy collection install . --upgrade
-
       - name: Run Molecule tests
         run: molecule test -s ${{ matrix.scenario }}
         env:
           ANSIBLE_ASYNC_DIR: /tmp/.ansible_async
-          MOLECULE_PODMAN_EXECUTABLE: /usr/local/bin/podman-wrapper
           ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_PODMAN_EXECUTABLE: /usr/local/bin/podman-wrapper
           PY_COLORS: '1'
 
   tag:
@@ -100,6 +98,7 @@ jobs:
       - check-version
       - lint
       - pytest
+      - black
       - molecule
     if: needs.check-version.outputs.version_changed == 'true'
     steps:
