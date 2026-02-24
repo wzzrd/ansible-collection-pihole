@@ -83,6 +83,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Install Python dependencies
+        run: pip-3.11 install -r tests/requirements.txt
+
       - name: Run Molecule tests
         run: molecule test -s ${{ matrix.scenario }}
         env:
