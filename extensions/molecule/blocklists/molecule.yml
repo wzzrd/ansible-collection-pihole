@@ -51,6 +51,7 @@ provisioner:
             ansible_connection: local
             pihole_url: "http://localhost:8081"
             pihole_password: "molecule_test_password"
+            molecule_debug: true
   playbooks:
     prepare: prepare.yml
     converge: converge.yml

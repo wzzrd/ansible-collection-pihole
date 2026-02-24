@@ -59,6 +59,7 @@ provisioner:
             ansible_connection: local
             pihole_url: "http://localhost:8080"
             pihole_password: "molecule_test_password"
+            molecule_debug: true
 
 verifier:
   name: ansible

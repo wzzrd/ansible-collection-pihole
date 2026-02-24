@@ -102,7 +102,7 @@
         pihole: "{{ pihole_url }}"
         password: "{{ pihole_password }}"
       register: auth_result
-      no_log: true
+      no_log: "{{ not (molecule_debug | default(false)) }}"
       retries: 5
       delay: 5
 
