@@ -87,7 +87,7 @@ jobs:
         run: pip-3.11 install -r tests/requirements.txt
 
       - name: Run Molecule tests
-        run: molecule test -s ${{ matrix.scenario }}
+        run: molecule test --scenario-name ${{ matrix.scenario }} --report --command-borders
         env:
           ANSIBLE_ASYNC_DIR: /tmp/.ansible_async
           ANSIBLE_FORCE_COLOR: '1'

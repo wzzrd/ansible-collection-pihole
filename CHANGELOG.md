@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.2 (2026-02-24)
+
+### Testing
+- Molecule updates: add cleanup
+- Molecule update: remove removals from converge (dns_dhcp)
+- Add collection level requirements to shut up molecule
+- Add --report and --command-borders to molecule command in ci
+
 ## v1.0.1 (2026-02-24)
 
 ### Improvements

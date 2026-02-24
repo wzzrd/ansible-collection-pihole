@@ -1,5 +1,5 @@
 ---
-# Converge playbook for the dns_dhcp scenario.
+# Cleanup playbook for the dns_dhcp scenario.
 #
 # Fictitious organisation: Acme Labs
 # Network: 192.168.88.0/24, domain acme.lab
@@ -13,7 +13,7 @@
 #   rpi-cam    192.168.88.50  -                   de:ad:be:ef:00:05
 #   pihole     192.168.88.5   fd00:dead:beef::5   (infrastructure, no DHCP)
 
-- name: Converge – create DHCP reservations, A, AAAA and CNAME records
+- name: Cleanup – remove DHCP reservations, A, AAAA and CNAME records
   hosts: localhost
   connection: local
   gather_facts: false
@@ -102,14 +102,14 @@
     # ------------------------------------------------------------------ #
     # DHCP reservations                                                    #
     # ------------------------------------------------------------------ #
-    - name: Ensure DHCP reservations are present
+    - name: Ensure DHCP reservations are absent
       wzzrd.pihole.dhcp_reservation:
         pihole: "{{ pihole_url }}"
         sid: "{{ auth_result.sid }}"
         hw: "{{ item.hw }}"
         ip: "{{ item.ip }}"
         name: "{{ item.name }}"
-        state: present
+        state: absent
       loop: "{{ dhcp_reservations }}"
       loop_control:
         label: "{{ item.name }} ({{ item.ip }})"
@@ -119,13 +119,13 @@
     # ------------------------------------------------------------------ #
     # A records (IPv4 static DNS)                                          #
     # ------------------------------------------------------------------ #
-    - name: Ensure A records are present
+    - name: Ensure A records are absent
       wzzrd.pihole.dns_record:
         pihole: "{{ pihole_url }}"
         sid: "{{ auth_result.sid }}"
         ip: "{{ item.ip }}"
         name: "{{ item.name }}"
-        state: present
+        state: absent
         unique: true
       loop: "{{ a_records }}"
       loop_control:
@@ -136,13 +136,13 @@
     # ------------------------------------------------------------------ #
     # AAAA records (IPv6 static DNS)                                       #
     # ------------------------------------------------------------------ #
-    - name: Ensure AAAA records are present
+    - name: Ensure AAAA records are absent
       wzzrd.pihole.dns_record:
         pihole: "{{ pihole_url }}"
         sid: "{{ auth_result.sid }}"
         ip: "{{ item.ip }}"
         name: "{{ item.name }}"
-        state: present
+        state: absent
         unique: false
       loop: "{{ aaaa_records }}"
       loop_control:
@@ -153,13 +153,13 @@
     # ------------------------------------------------------------------ #
     # CNAME records                                                        #
     # ------------------------------------------------------------------ #
-    - name: Ensure CNAME records are present
+    - name: Ensure CNAME records are absent
       wzzrd.pihole.cname_record:
         pihole: "{{ pihole_url }}"
         sid: "{{ auth_result.sid }}"
         cname: "{{ item.cname }}"
         name: "{{ item.name }}"
-        state: present
+        state: absent
         unique: true
       loop: "{{ cname_records }}"
       loop_control:
