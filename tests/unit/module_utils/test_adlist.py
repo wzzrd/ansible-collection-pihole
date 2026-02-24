@@ -19,7 +19,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
-
 BLOCKLIST_URL = "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
 ALLOWLIST_URL = "https://raw.githubusercontent.com/example/allowlist/main/list.txt"
 
@@ -56,6 +55,7 @@ def _mock_client(return_value=None, side_effect=None):
 # get_adlist
 # ---------------------------------------------------------------------------
 
+
 class TestGetAdlist:
     def test_returns_adlist_dict(self):
         client = _mock_client(_make_response(200, ADLISTS_RESPONSE))
@@ -90,7 +90,9 @@ class TestGetAdlist:
         assert "?type=block" in endpoint
 
     def test_allow_list_type(self):
-        resp = _make_response(200, {"lists": [{"address": ALLOWLIST_URL, "type": "allow"}]})
+        resp = _make_response(
+            200, {"lists": [{"address": ALLOWLIST_URL, "type": "allow"}]}
+        )
         client = _mock_client(resp)
         result = get_adlist(client, ALLOWLIST_URL, list_type="allow")
         assert result["type"] == "allow"
@@ -104,6 +106,7 @@ class TestGetAdlist:
 # ---------------------------------------------------------------------------
 # add_adlist
 # ---------------------------------------------------------------------------
+
 
 class TestAddAdlist:
     def test_returns_api_response(self):
@@ -165,6 +168,7 @@ class TestAddAdlist:
 # update_adlist
 # ---------------------------------------------------------------------------
 
+
 class TestUpdateAdlist:
     def _make_update_client(self, get_resp, put_resp):
         c = MagicMock()
@@ -225,6 +229,7 @@ class TestUpdateAdlist:
 # ---------------------------------------------------------------------------
 # delete_adlist
 # ---------------------------------------------------------------------------
+
 
 class TestDeleteAdlist:
     def test_204_response_returns_success(self):

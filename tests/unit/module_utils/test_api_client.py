@@ -15,10 +15,10 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeNotFoundError,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_response(status_code=200, json_data=None, text=""):
     resp = MagicMock(spec=requests.Response)
@@ -36,6 +36,7 @@ def _make_client(base_url="https://pihole.local", sid="test-sid", timeout=10):
 # ---------------------------------------------------------------------------
 # PiholeApiClient.__init__
 # ---------------------------------------------------------------------------
+
 
 class TestPiholeApiClientInit:
     def test_trailing_slash_stripped(self):
@@ -62,6 +63,7 @@ class TestPiholeApiClientInit:
 # ---------------------------------------------------------------------------
 # PiholeApiClient._request
 # ---------------------------------------------------------------------------
+
 
 class TestRequest:
     def setup_method(self):
@@ -161,6 +163,7 @@ class TestRequest:
 # PiholeApiClient.authenticate (classmethod)
 # ---------------------------------------------------------------------------
 
+
 class TestAuthenticate:
     @patch("requests.post")
     def test_success_returns_sid(self, mock_post):
@@ -172,27 +175,21 @@ class TestAuthenticate:
 
     @patch("requests.post")
     def test_posts_to_api_auth(self, mock_post):
-        mock_post.return_value = _make_response(
-            200, {"session": {"sid": "sid123"}}
-        )
+        mock_post.return_value = _make_response(200, {"session": {"sid": "sid123"}})
         PiholeApiClient.authenticate("https://pihole.local", "pass")
         url = mock_post.call_args.args[0]
         assert url == "https://pihole.local/api/auth"
 
     @patch("requests.post")
     def test_trailing_slash_stripped_from_url(self, mock_post):
-        mock_post.return_value = _make_response(
-            200, {"session": {"sid": "sid123"}}
-        )
+        mock_post.return_value = _make_response(200, {"session": {"sid": "sid123"}})
         PiholeApiClient.authenticate("https://pihole.local/", "pass")
         url = mock_post.call_args.args[0]
         assert url == "https://pihole.local/api/auth"
 
     @patch("requests.post")
     def test_password_sent_in_body(self, mock_post):
-        mock_post.return_value = _make_response(
-            200, {"session": {"sid": "sid123"}}
-        )
+        mock_post.return_value = _make_response(200, {"session": {"sid": "sid123"}})
         PiholeApiClient.authenticate("https://pihole.local", "mypassword")
         assert mock_post.call_args.kwargs["json"] == {"password": "mypassword"}
 

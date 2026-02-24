@@ -18,7 +18,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.client import (
     update_client,
 )
 
-
 CLIENT_RECORD = {
     "client": "192.168.88.20",
     "comment": "workstation",
@@ -49,6 +48,7 @@ def _mock_client(return_value=None, side_effect=None):
 # ---------------------------------------------------------------------------
 # get_client
 # ---------------------------------------------------------------------------
+
 
 class TestGetClient:
     def test_returns_client_dict(self):
@@ -99,6 +99,7 @@ class TestGetClient:
 # ---------------------------------------------------------------------------
 # add_client
 # ---------------------------------------------------------------------------
+
 
 class TestAddClient:
     def test_returns_api_response(self):
@@ -152,6 +153,7 @@ class TestAddClient:
 # update_client
 # ---------------------------------------------------------------------------
 
+
 class TestUpdateClient:
     def test_returns_api_response(self):
         client = _mock_client(_make_response(200, CLIENTS_RESPONSE))
@@ -193,6 +195,7 @@ class TestUpdateClient:
 # ---------------------------------------------------------------------------
 # delete_client
 # ---------------------------------------------------------------------------
+
 
 class TestDeleteClient:
     def test_returns_true_on_success(self):

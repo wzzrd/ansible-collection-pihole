@@ -38,6 +38,7 @@ def _mock_client(return_value=None, side_effect=None):
 # get_blocking_status
 # ---------------------------------------------------------------------------
 
+
 class TestGetBlockingStatus:
     def test_returns_status_dict(self):
         payload = {"blocking": "enabled", "timer": None}
@@ -77,6 +78,7 @@ class TestGetBlockingStatus:
 # ---------------------------------------------------------------------------
 # set_blocking_status
 # ---------------------------------------------------------------------------
+
 
 class TestSetBlockingStatus:
     def test_enable_blocking(self):

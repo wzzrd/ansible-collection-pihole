@@ -22,7 +22,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeNotFoundError,
 )
 
-
 DOCUMENTATION = r"""
 ---
 module: pihole_group

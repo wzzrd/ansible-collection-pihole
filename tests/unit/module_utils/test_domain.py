@@ -19,7 +19,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.domain import (
     update_domain,
 )
 
-
 DOMAIN_RECORD = {
     "domain": "ads.example.com",
     "type": "deny",
@@ -53,6 +52,7 @@ def _mock_client(return_value=None, side_effect=None):
 # ---------------------------------------------------------------------------
 # get_domain
 # ---------------------------------------------------------------------------
+
 
 class TestGetDomain:
     def test_returns_domain_and_location(self):
@@ -111,6 +111,7 @@ class TestGetDomain:
 # ---------------------------------------------------------------------------
 # add_domain
 # ---------------------------------------------------------------------------
+
 
 class TestAddDomain:
     def test_returns_api_response(self):
@@ -172,6 +173,7 @@ class TestAddDomain:
 # update_domain
 # ---------------------------------------------------------------------------
 
+
 class TestUpdateDomain:
     def _client_two_calls(self, get_resp, put_resp):
         c = MagicMock()
@@ -184,9 +186,12 @@ class TestUpdateDomain:
         client = _mock_client(resp_404)
         with pytest.raises(PiholeValidationError) as exc_info:
             update_domain(
-                client, "ghost.example.com",
-                current_type="deny", current_kind="exact",
-                target_type="deny", target_kind="exact",
+                client,
+                "ghost.example.com",
+                current_type="deny",
+                current_kind="exact",
+                target_type="deny",
+                target_kind="exact",
             )
         assert "does not exist" in str(exc_info.value)
 
@@ -195,9 +200,12 @@ class TestUpdateDomain:
         put_resp = _make_response(200, {})
         client = self._client_two_calls(get_resp, put_resp)
         update_domain(
-            client, "ads.example.com",
-            current_type="deny", current_kind="exact",
-            target_type="deny", target_kind="exact",
+            client,
+            "ads.example.com",
+            current_type="deny",
+            current_kind="exact",
+            target_type="deny",
+            target_kind="exact",
             enabled=False,
         )
         put_payload = client._request.call_args_list[1].kwargs["json_data"]
@@ -208,9 +216,12 @@ class TestUpdateDomain:
         put_resp = _make_response(200, {})
         client = self._client_two_calls(get_resp, put_resp)
         update_domain(
-            client, "ads.example.com",
-            current_type="deny", current_kind="exact",
-            target_type="deny", target_kind="exact",
+            client,
+            "ads.example.com",
+            current_type="deny",
+            current_kind="exact",
+            target_type="deny",
+            target_kind="exact",
         )
         put_payload = client._request.call_args_list[1].kwargs["json_data"]
         assert put_payload["enabled"] is True
@@ -220,9 +231,12 @@ class TestUpdateDomain:
         put_resp = _make_response(200, {})
         client = self._client_two_calls(get_resp, put_resp)
         update_domain(
-            client, "ads.example.com",
-            current_type="deny", current_kind="exact",
-            target_type="allow", target_kind="exact",
+            client,
+            "ads.example.com",
+            current_type="deny",
+            current_kind="exact",
+            target_type="allow",
+            target_kind="exact",
         )
         put_payload = client._request.call_args_list[1].kwargs["json_data"]
         assert put_payload["type"] == "deny"
@@ -233,9 +247,12 @@ class TestUpdateDomain:
         put_resp = _make_response(200, {})
         client = self._client_two_calls(get_resp, put_resp)
         update_domain(
-            client, "ads.example.com",
-            current_type="deny", current_kind="exact",
-            target_type="deny", target_kind="exact",
+            client,
+            "ads.example.com",
+            current_type="deny",
+            current_kind="exact",
+            target_type="deny",
+            target_kind="exact",
             comment="updated comment",
         )
         put_payload = client._request.call_args_list[1].kwargs["json_data"]
@@ -247,9 +264,12 @@ class TestUpdateDomain:
         put_resp = _make_response(200, {})
         client = self._client_two_calls(get_resp, put_resp)
         update_domain(
-            client, "ads.example.com",
-            current_type="deny", current_kind="exact",
-            target_type="allow", target_kind="exact",
+            client,
+            "ads.example.com",
+            current_type="deny",
+            current_kind="exact",
+            target_type="allow",
+            target_kind="exact",
         )
         put_endpoint = client._request.call_args_list[1].args[1]
         assert "allow/exact" in put_endpoint
@@ -258,6 +278,7 @@ class TestUpdateDomain:
 # ---------------------------------------------------------------------------
 # delete_domain
 # ---------------------------------------------------------------------------
+
 
 class TestDeleteDomain:
     def test_returns_true_on_success(self):

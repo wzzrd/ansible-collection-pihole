@@ -52,15 +52,13 @@ def get_client(client: PiholeApiClient, client_id: str) -> Optional[Dict[str, An
 def add_client(
     client: PiholeApiClient,
     client_id: str,
-    comment: Optional[str] = None, # This is comment_param from the module
-    group_ids: Optional[List[int]] = None
+    comment: Optional[str] = None,  # This is comment_param from the module
+    group_ids: Optional[List[int]] = None,
 ) -> Dict[str, Any]:
     """
     Add a new client configuration.
     """
-    data: Dict[str, Any] = {
-        "client": client_id
-    }
+    data: Dict[str, Any] = {"client": client_id}
 
     # Only include 'comment' in the payload if it's explicitly provided (not None)
     if comment is not None:
@@ -72,7 +70,6 @@ def add_client(
     else:
         # Fallback, though module should always provide it for 'present' state
         data["groups"] = [0]
-
 
     try:
         response = client._request("POST", "api/clients", json_data=data)
@@ -87,8 +84,8 @@ def add_client(
 def update_client(
     client: PiholeApiClient,
     client_id: str,
-    comment: Optional[str] = None, # This is comment_param from the module
-    group_ids: Optional[List[int]] = None
+    comment: Optional[str] = None,  # This is comment_param from the module
+    group_ids: Optional[List[int]] = None,
 ) -> Dict[str, Any]:
     """
     Update an existing client configuration.
@@ -113,15 +110,12 @@ def update_client(
         current_client_data = get_client(client, client_id)
         if current_client_data:
             data["groups"] = current_client_data.get("groups", [0])
-        else: # Should have been caught by module if client doesn't exist
+        else:  # Should have been caught by module if client doesn't exist
             data["groups"] = [0]
-
 
     try:
         response = client._request(
-            "PUT",
-            f"api/clients/{encoded_client}",
-            json_data=data
+            "PUT", f"api/clients/{encoded_client}", json_data=data
         )
         response.raise_for_status()
         return response.json()

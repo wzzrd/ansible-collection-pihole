@@ -59,11 +59,7 @@ def get_static_dns_records(client: PiholeApiClient) -> List[str]:
         raise PiholeApiError(f"Failed to retrieve static DNS records: {str(e)}")
 
 
-def check_static_dns_record_exists(
-    client: PiholeApiClient,
-    ip: str,
-    name: str
-) -> bool:
+def check_static_dns_record_exists(client: PiholeApiClient, ip: str, name: str) -> bool:
     """
     Check if a specific static DNS record exists.
 
@@ -88,9 +84,7 @@ def check_static_dns_record_exists(
 
 
 def add_static_dns_record(
-    client: PiholeApiClient,
-    ip: str,
-    name: str
+    client: PiholeApiClient, ip: str, name: str
 ) -> Dict[str, Any]:
     """
     Add a new static DNS record (A record).
@@ -124,16 +118,10 @@ def add_static_dns_record(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to add DNS record for {name} ({ip}): {str(e)}"
-        )
+        raise PiholeApiError(f"Failed to add DNS record for {name} ({ip}): {str(e)}")
 
 
-def delete_static_dns_record(
-    client: PiholeApiClient,
-    ip: str,
-    name: str
-) -> None:
+def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> None:
     """
     Delete a static DNS record.
 
@@ -160,6 +148,4 @@ def delete_static_dns_record(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to delete DNS record for {name} ({ip}): {str(e)}"
-        )
+        raise PiholeApiError(f"Failed to delete DNS record for {name} ({ip}): {str(e)}")

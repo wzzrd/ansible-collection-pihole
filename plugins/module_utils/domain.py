@@ -33,7 +33,7 @@ def get_domain(
     client: PiholeApiClient,
     domain: str,
     domain_type: Optional[str] = None,
-    domain_kind: Optional[str] = None
+    domain_kind: Optional[str] = None,
 ) -> Tuple[Optional[Dict[str, Any]], Optional[Tuple[str, str]]]:
     """
     Get details for a domain from whitelist or blacklist.
@@ -104,7 +104,7 @@ def add_domain(
     domain_kind: str,
     comment: Optional[str] = None,
     group_ids: Optional[List[int]] = None,
-    enabled: bool = True
+    enabled: bool = True,
 ) -> Dict[str, Any]:
     """
     Add a domain to the whitelist or blacklist.
@@ -135,10 +135,7 @@ def add_domain(
         ...     comment="Known ad server"
         ... )
     """
-    data: Dict[str, Any] = {
-        "domain": domain,
-        "enabled": enabled
-    }
+    data: Dict[str, Any] = {"domain": domain, "enabled": enabled}
 
     if comment is not None:
         data["comment"] = comment
@@ -148,9 +145,7 @@ def add_domain(
 
     try:
         response = client._request(
-            "POST",
-            f"api/domains/{domain_type}/{domain_kind}",
-            json_data=data
+            "POST", f"api/domains/{domain_type}/{domain_kind}", json_data=data
         )
         response.raise_for_status()
         return response.json()
@@ -172,7 +167,7 @@ def update_domain(
     target_kind: str,
     comment: Optional[str] = None,
     group_ids: Optional[List[int]] = None,
-    enabled: Optional[bool] = None
+    enabled: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
     Update a domain in the whitelist or blacklist.
@@ -233,9 +228,15 @@ def update_domain(
         data["kind"] = current_kind
 
     # Preserve existing values if not specified
-    data["comment"] = comment if comment is not None else current_domain.get("comment", "")
-    data["groups"] = group_ids if group_ids is not None else current_domain.get("groups", [0])
-    data["enabled"] = enabled if enabled is not None else current_domain.get("enabled", True)
+    data["comment"] = (
+        comment if comment is not None else current_domain.get("comment", "")
+    )
+    data["groups"] = (
+        group_ids if group_ids is not None else current_domain.get("groups", [0])
+    )
+    data["enabled"] = (
+        enabled if enabled is not None else current_domain.get("enabled", True)
+    )
 
     try:
         response = client._request("PUT", endpoint, json_data=data)
@@ -245,16 +246,11 @@ def update_domain(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to update domain '{domain}': {str(e)}"
-        )
+        raise PiholeApiError(f"Failed to update domain '{domain}': {str(e)}")
 
 
 def delete_domain(
-    client: PiholeApiClient,
-    domain: str,
-    domain_type: str,
-    domain_kind: str
+    client: PiholeApiClient, domain: str, domain_type: str, domain_kind: str
 ) -> bool:
     """
     Delete a domain from the whitelist or blacklist.

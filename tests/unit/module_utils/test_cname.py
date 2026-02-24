@@ -85,25 +85,29 @@ class TestCheckCnameRecordExists:
         self.client = _mock_client(_make_response(200, CNAME_RESPONSE))
 
     def test_existing_record_returns_true(self):
-        assert check_cname_record_exists(
-            self.client, "www.acme.lab", "nas01.acme.lab"
-        ) is True
+        assert (
+            check_cname_record_exists(self.client, "www.acme.lab", "nas01.acme.lab")
+            is True
+        )
 
     def test_missing_cname_returns_false(self):
-        assert check_cname_record_exists(
-            self.client, "blog.acme.lab", "nas01.acme.lab"
-        ) is False
+        assert (
+            check_cname_record_exists(self.client, "blog.acme.lab", "nas01.acme.lab")
+            is False
+        )
 
     def test_wrong_target_returns_false(self):
-        assert check_cname_record_exists(
-            self.client, "www.acme.lab", "other.acme.lab"
-        ) is False
+        assert (
+            check_cname_record_exists(self.client, "www.acme.lab", "other.acme.lab")
+            is False
+        )
 
     def test_reversed_order_returns_false(self):
         # "nas01.acme.lab,www.acme.lab" is not in the list
-        assert check_cname_record_exists(
-            self.client, "nas01.acme.lab", "www.acme.lab"
-        ) is False
+        assert (
+            check_cname_record_exists(self.client, "nas01.acme.lab", "www.acme.lab")
+            is False
+        )
 
 
 class TestAddCnameRecord:

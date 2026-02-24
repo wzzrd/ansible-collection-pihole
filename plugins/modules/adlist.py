@@ -5,14 +5,24 @@
 # GNU General Public License v3.0+
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import PiholeApiClient
-from ansible_collections.wzzrd.pihole.plugins.module_utils.adlist import (
-    get_adlist, add_adlist, update_adlist, delete_adlist
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
 )
-from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import group_names_to_ids
+from ansible_collections.wzzrd.pihole.plugins.module_utils.adlist import (
+    get_adlist,
+    add_adlist,
+    update_adlist,
+    delete_adlist,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
+    group_names_to_ids,
+)
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError, PiholeConnectionError,
-    PiholeApiError, PiholeValidationError, PiholeNotFoundError
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+    PiholeValidationError,
+    PiholeNotFoundError,
 )
 
 DOCUMENTATION = r"""
@@ -201,23 +211,29 @@ def main():
 
         # Convert group names to IDs
         try:
-            group_ids = group_names_to_ids(client, group_names) #
+            group_ids = group_names_to_ids(client, group_names)  #
         except PiholeValidationError as e:
             module.fail_json(msg=str(e))
-            return # Ensure exit after fail_json
+            return  # Ensure exit after fail_json
 
         # Check if the adlist exists
-        existing_adlist = get_adlist(client, address, list_type) #
+        existing_adlist = get_adlist(client, address, list_type)  #
         exists = existing_adlist is not None
 
         if state == "present":
             if exists:
                 needs_update = False
                 # Check if comment needs updating
-                if comment_param is not None and existing_adlist.get("comment", "") != comment_param:
+                if (
+                    comment_param is not None
+                    and existing_adlist.get("comment", "") != comment_param
+                ):
                     needs_update = True
                 # Check if enabled status needs updating
-                if enabled_param is not None and existing_adlist.get("enabled", True) != enabled_param:
+                if (
+                    enabled_param is not None
+                    and existing_adlist.get("enabled", True) != enabled_param
+                ):
                     needs_update = True
                 # Check if groups need updating (compare sorted lists of IDs)
                 # Default group ID is 0 if not specified
@@ -227,54 +243,107 @@ def main():
 
                 if needs_update:
                     if module.check_mode:
-                        module.exit_json(changed=True, msg=f"Would update adlist '{address}'")
+                        module.exit_json(
+                            changed=True, msg=f"Would update adlist '{address}'"
+                        )
 
                     # For update, pass None for params not being changed to preserve existing values
                     # The utility function handles fetching current values if specific ones are None
-                    updated_comment = comment_param if comment_param is not None else existing_adlist.get("comment")
-                    updated_enabled = enabled_param if enabled_param is not None else existing_adlist.get("enabled")
+                    updated_comment = (
+                        comment_param
+                        if comment_param is not None
+                        else existing_adlist.get("comment")
+                    )
+                    updated_enabled = (
+                        enabled_param
+                        if enabled_param is not None
+                        else existing_adlist.get("enabled")
+                    )
 
-                    result = update_adlist(client, address, list_type=list_type, comment=updated_comment, group_ids=group_ids, enabled=updated_enabled) #
+                    result = update_adlist(
+                        client,
+                        address,
+                        list_type=list_type,
+                        comment=updated_comment,
+                        group_ids=group_ids,
+                        enabled=updated_enabled,
+                    )  #
 
                     updated_adlist_details = None
                     if result and "lists" in result and result["lists"]:
                         updated_adlist_details = result["lists"][0]
 
-                    module.exit_json(changed=True, result=result, msg=f"Adlist '{address}' updated", adlist=updated_adlist_details)
+                    module.exit_json(
+                        changed=True,
+                        result=result,
+                        msg=f"Adlist '{address}' updated",
+                        adlist=updated_adlist_details,
+                    )
                 else:
-                    module.exit_json(changed=False, msg=f"Adlist '{address}' already exists with the specified properties", adlist=existing_adlist)
-            else: # Adlist doesn't exist, create it
+                    module.exit_json(
+                        changed=False,
+                        msg=f"Adlist '{address}' already exists with the specified properties",
+                        adlist=existing_adlist,
+                    )
+            else:  # Adlist doesn't exist, create it
                 if module.check_mode:
-                    module.exit_json(changed=True, msg=f"Would create adlist '{address}'")
+                    module.exit_json(
+                        changed=True, msg=f"Would create adlist '{address}'"
+                    )
 
-                result = add_adlist(client, address, list_type, comment_param, group_ids, enabled_param) #
+                result = add_adlist(
+                    client, address, list_type, comment_param, group_ids, enabled_param
+                )  #
                 created_adlist_details = None
                 if result and "lists" in result and result["lists"]:
                     created_adlist_details = result["lists"][0]
-                module.exit_json(changed=True, result=result, msg=f"Adlist '{address}' created", adlist=created_adlist_details)
+                module.exit_json(
+                    changed=True,
+                    result=result,
+                    msg=f"Adlist '{address}' created",
+                    adlist=created_adlist_details,
+                )
 
         elif state == "absent":
             if exists:
                 if module.check_mode:
-                    module.exit_json(changed=True, msg=f"Would delete adlist '{address}'")
+                    module.exit_json(
+                        changed=True, msg=f"Would delete adlist '{address}'"
+                    )
 
                 # delete_adlist utility returns a dict with "success": True/False
                 result = delete_adlist(client, address, list_type)
-                if result.get("success"): # Successfully deleted
-                    module.exit_json(changed=True, result=result, msg=f"Adlist '{address}' deleted")
-                else: # Adlist was not found by the delete call (e.g., 404) or other delete failure
-                      # If it was a 404, it means it was already absent.
-                    is_not_found_error = "not found" in result.get("message", "").lower()
+                if result.get("success"):  # Successfully deleted
+                    module.exit_json(
+                        changed=True, result=result, msg=f"Adlist '{address}' deleted"
+                    )
+                else:  # Adlist was not found by the delete call (e.g., 404) or other delete failure
+                    # If it was a 404, it means it was already absent.
+                    is_not_found_error = (
+                        "not found" in result.get("message", "").lower()
+                    )
                     if is_not_found_error:
-                         module.exit_json(changed=False, result=result, msg=f"Adlist '{address}' was already absent when deletion was attempted.")
+                        module.exit_json(
+                            changed=False,
+                            result=result,
+                            msg=f"Adlist '{address}' was already absent when deletion was attempted.",
+                        )
                     else:
-                         module.fail_json(msg=result.get("message", f"Failed to delete adlist '{address}'."))
-            else: # Adlist does not exist (based on initial get_adlist check)
-                module.exit_json(changed=False, msg=f"Adlist '{address}' does not exist")
+                        module.fail_json(
+                            msg=result.get(
+                                "message", f"Failed to delete adlist '{address}'."
+                            )
+                        )
+            else:  # Adlist does not exist (based on initial get_adlist check)
+                module.exit_json(
+                    changed=False, msg=f"Adlist '{address}' does not exist"
+                )
 
     except PiholeValidationError as e:
         module.fail_json(msg=str(e))
-    except PiholeNotFoundError as e: # Should be caught by get_adlist returning None, but as a safeguard
+    except (
+        PiholeNotFoundError
+    ) as e:  # Should be caught by get_adlist returning None, but as a safeguard
         module.fail_json(msg=str(e))
     except PiholeAuthError as e:
         module.fail_json(msg=f"Authentication error: {str(e)}")

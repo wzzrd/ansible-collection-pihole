@@ -20,6 +20,7 @@ dependency:
   options:
     ignore-certs: true
     ignore-errors: true
+    requirements-file: requirements.yml
 
 driver:
   name: podman

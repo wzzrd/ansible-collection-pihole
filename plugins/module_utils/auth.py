@@ -53,17 +53,13 @@ def authenticate(base_url: str, password: str, timeout: int = 10) -> str:
     auth_url = f"{base_url.rstrip('/')}/api/auth"
 
     try:
-        response = requests.post(
-            auth_url,
-            json={"password": password},
-            timeout=timeout
-        )
+        response = requests.post(auth_url, json={"password": password}, timeout=timeout)
 
         if response.status_code != 200:
             raise PiholeAuthError(
                 f"Authentication failed with status code {response.status_code}",
                 status_code=response.status_code,
-                response_text=response.text
+                response_text=response.text,
             )
 
         data: Dict[str, Any] = response.json()
@@ -72,8 +68,7 @@ def authenticate(base_url: str, password: str, timeout: int = 10) -> str:
 
         if not sid:
             raise PiholeAuthError(
-                "Authentication failed: No session ID returned",
-                response_text=str(data)
+                "Authentication failed: No session ID returned", response_text=str(data)
             )
 
         return sid

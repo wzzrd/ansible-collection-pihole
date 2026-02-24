@@ -49,15 +49,14 @@ GROUPS_RESPONSE = {
 }
 
 SINGLE_GROUP_RESPONSE = {
-    "groups": [
-        {"id": 1, "name": "IoT", "comment": "IoT devices", "enabled": True}
-    ]
+    "groups": [{"id": 1, "name": "IoT", "comment": "IoT devices", "enabled": True}]
 }
 
 
 # ---------------------------------------------------------------------------
 # get_groups
 # ---------------------------------------------------------------------------
+
 
 class TestGetGroups:
     def test_returns_name_to_id_mapping(self):
@@ -89,6 +88,7 @@ class TestGetGroups:
 # ---------------------------------------------------------------------------
 # get_group
 # ---------------------------------------------------------------------------
+
 
 class TestGetGroup:
     def test_returns_group_dict_when_found(self):
@@ -126,9 +126,12 @@ class TestGetGroup:
 # add_group
 # ---------------------------------------------------------------------------
 
+
 class TestAddGroup:
     def test_returns_api_response(self):
-        client = _mock_client(_make_response(201, {"groups": [{"id": 3, "name": "New"}]}))
+        client = _mock_client(
+            _make_response(201, {"groups": [{"id": 3, "name": "New"}]})
+        )
         result = add_group(client, "New")
         assert "groups" in result
 
@@ -168,6 +171,7 @@ class TestAddGroup:
 # ---------------------------------------------------------------------------
 # update_group
 # ---------------------------------------------------------------------------
+
 
 class TestUpdateGroup:
     def _client_with_get_then_put(self, get_resp, put_resp):
@@ -235,6 +239,7 @@ class TestUpdateGroup:
 # delete_group
 # ---------------------------------------------------------------------------
 
+
 class TestDeleteGroup:
     def test_204_response_returns_success_dict(self):
         resp = _make_response(204, text="")
@@ -266,6 +271,7 @@ class TestDeleteGroup:
 # ---------------------------------------------------------------------------
 # batch_delete_groups
 # ---------------------------------------------------------------------------
+
 
 class TestBatchDeleteGroups:
     def test_empty_list_returns_immediately(self):
@@ -311,6 +317,7 @@ class TestBatchDeleteGroups:
 # ---------------------------------------------------------------------------
 # group_names_to_ids
 # ---------------------------------------------------------------------------
+
 
 class TestGroupNamesToIds:
     def setup_method(self):

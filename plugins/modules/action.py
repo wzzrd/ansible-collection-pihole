@@ -16,7 +16,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
-
 DOCUMENTATION = r"""
 ---
 module: pihole_action

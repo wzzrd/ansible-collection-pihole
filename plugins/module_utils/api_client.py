@@ -183,10 +183,10 @@ class PiholeApiClient:
             raise PiholeConnectionError(f"Failed to connect to {auth_url}: {str(e)}")
         except requests.exceptions.RequestException as e:
             raise PiholeApiError(f"Request error during authentication: {str(e)}")
-        except ValueError as e: # Handles JSON decoding errors
+        except ValueError as e:  # Handles JSON decoding errors
             raise PiholeApiError(
                 f"Invalid JSON response during authentication: {str(e)}",
-                response_text=response.text if 'response' in locals() else None
+                response_text=response.text if "response" in locals() else None,
             )
         except Exception as e:
             # Catch any other unexpected exceptions and wrap them

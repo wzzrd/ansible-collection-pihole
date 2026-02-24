@@ -18,7 +18,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeApiError,
 )
 
-
 DOCUMENTATION = r"""
 ---
 module: pihole_blocking

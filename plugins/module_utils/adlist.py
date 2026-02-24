@@ -30,9 +30,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
 
 
 def get_adlist(
-    client: PiholeApiClient,
-    address: str,
-    list_type: str = "block"
+    client: PiholeApiClient, address: str, list_type: str = "block"
 ) -> Optional[Dict[str, Any]]:
     """
     Get details for a specific adlist.
@@ -92,7 +90,7 @@ def add_adlist(
     list_type: str = "block",
     comment: Optional[str] = None,
     group_ids: Optional[List[int]] = None,
-    enabled: bool = True
+    enabled: bool = True,
 ) -> Dict[str, Any]:
     """
     Add a new adlist.
@@ -121,11 +119,7 @@ def add_adlist(
         ...     group_ids=[0, 1]
         ... )
     """
-    data: Dict[str, Any] = {
-        "address": address,
-        "type": list_type,
-        "enabled": enabled
-    }
+    data: Dict[str, Any] = {"address": address, "type": list_type, "enabled": enabled}
 
     if comment is not None:
         data["comment"] = comment
@@ -134,7 +128,9 @@ def add_adlist(
         data["groups"] = group_ids
 
     try:
-        response = client._request("POST", f"api/lists?type={list_type}", json_data=data)
+        response = client._request(
+            "POST", f"api/lists?type={list_type}", json_data=data
+        )
         response.raise_for_status()
         return response.json()
 
@@ -152,7 +148,7 @@ def update_adlist(
     list_type: Optional[str] = None,
     comment: Optional[str] = None,
     group_ids: Optional[List[int]] = None,
-    enabled: Optional[bool] = None
+    enabled: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
     Update an existing adlist.
@@ -198,9 +194,15 @@ def update_adlist(
     if list_type is not None:
         data["type"] = list_type
 
-    data["comment"] = comment if comment is not None else current_adlist.get("comment", "")
-    data["groups"] = group_ids if group_ids is not None else current_adlist.get("groups", [0])
-    data["enabled"] = enabled if enabled is not None else current_adlist.get("enabled", True)
+    data["comment"] = (
+        comment if comment is not None else current_adlist.get("comment", "")
+    )
+    data["groups"] = (
+        group_ids if group_ids is not None else current_adlist.get("groups", [0])
+    )
+    data["enabled"] = (
+        enabled if enabled is not None else current_adlist.get("enabled", True)
+    )
 
     try:
         response = client._request("PUT", endpoint, json_data=data)
@@ -214,9 +216,7 @@ def update_adlist(
 
 
 def delete_adlist(
-    client: PiholeApiClient,
-    address: str,
-    list_type: str = "block"
+    client: PiholeApiClient, address: str, list_type: str = "block"
 ) -> Dict[str, Any]:
     """
     Delete an adlist.
@@ -249,10 +249,7 @@ def delete_adlist(
         response = client._request("DELETE", endpoint)
 
         if response.status_code == 404:
-            return {
-                "success": False,
-                "message": f"Adlist '{address}' not found"
-            }
+            return {"success": False, "message": f"Adlist '{address}' not found"}
 
         response.raise_for_status()
 
@@ -260,7 +257,7 @@ def delete_adlist(
         if response.status_code == 204 or not response.text:
             return {
                 "success": True,
-                "message": f"Adlist '{address}' deleted successfully"
+                "message": f"Adlist '{address}' deleted successfully",
             }
 
         # Try to parse as JSON, fall back to success message
@@ -270,7 +267,7 @@ def delete_adlist(
             return {
                 "success": True,
                 "message": f"Adlist '{address}' deleted successfully",
-                "raw_response": response.text
+                "raw_response": response.text,
             }
 
     except PiholeError:

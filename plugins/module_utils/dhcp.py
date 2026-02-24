@@ -60,10 +60,7 @@ def get_dhcp_reservations(client: PiholeApiClient) -> List[str]:
 
 
 def check_dhcp_reservation_exists(
-    client: PiholeApiClient,
-    hw: str,
-    ip: str,
-    name: str
+    client: PiholeApiClient, hw: str, ip: str, name: str
 ) -> bool:
     """
     Check if a specific DHCP reservation exists.
@@ -90,10 +87,7 @@ def check_dhcp_reservation_exists(
 
 
 def add_dhcp_reservation(
-    client: PiholeApiClient,
-    hw: str,
-    ip: str,
-    name: str
+    client: PiholeApiClient, hw: str, ip: str, name: str
 ) -> Dict[str, Any]:
     """
     Add a new DHCP reservation.
@@ -127,16 +121,11 @@ def add_dhcp_reservation(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to add DHCP reservation for {hw}: {str(e)}"
-        )
+        raise PiholeApiError(f"Failed to add DHCP reservation for {hw}: {str(e)}")
 
 
 def delete_dhcp_reservation(
-    client: PiholeApiClient,
-    hw: str,
-    ip: str,
-    name: str
+    client: PiholeApiClient, hw: str, ip: str, name: str
 ) -> None:
     """
     Delete a DHCP reservation.
@@ -166,6 +155,4 @@ def delete_dhcp_reservation(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to delete DHCP reservation for {hw}: {str(e)}"
-        )
+        raise PiholeApiError(f"Failed to delete DHCP reservation for {hw}: {str(e)}")

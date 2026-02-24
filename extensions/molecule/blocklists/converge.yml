@@ -140,6 +140,8 @@
         password: "{{ pihole_password }}"
       register: auth_result
       no_log: true
+      retries: 5
+      delay: 5
 
     # ------------------------------------------------------------------ #
     # Groups                                                               #

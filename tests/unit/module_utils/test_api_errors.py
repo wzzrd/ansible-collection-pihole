@@ -45,7 +45,9 @@ class TestPiholeApiError:
         assert err.status_code == 400
 
     def test_with_response_text(self):
-        err = PiholeApiError("oops", status_code=500, response_text='{"error":"internal"}')
+        err = PiholeApiError(
+            "oops", status_code=500, response_text='{"error":"internal"}'
+        )
         assert err.response_text == '{"error":"internal"}'
 
     def test_str_without_status_code(self):

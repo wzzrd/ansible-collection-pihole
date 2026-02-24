@@ -90,35 +90,53 @@ class TestCheckDhcpReservationExists:
         self.client = _mock_client(_make_response(200, DHCP_RESPONSE))
 
     def test_existing_reservation_lowercase_returns_true(self):
-        assert check_dhcp_reservation_exists(
-            self.client, "de:ad:be:ef:00:01", "192.168.88.10", "nas01"
-        ) is True
+        assert (
+            check_dhcp_reservation_exists(
+                self.client, "de:ad:be:ef:00:01", "192.168.88.10", "nas01"
+            )
+            is True
+        )
 
     def test_case_insensitive_mac_match(self):
         # DE:AD:BE:EF:00:02 is in the list; querying with lowercase should still match
-        assert check_dhcp_reservation_exists(
-            self.client, "de:ad:be:ef:00:02", "192.168.88.20", "workstation"
-        ) is True
+        assert (
+            check_dhcp_reservation_exists(
+                self.client, "de:ad:be:ef:00:02", "192.168.88.20", "workstation"
+            )
+            is True
+        )
 
     def test_uppercase_query_matches_lowercase_stored(self):
-        assert check_dhcp_reservation_exists(
-            self.client, "DE:AD:BE:EF:00:01", "192.168.88.10", "nas01"
-        ) is True
+        assert (
+            check_dhcp_reservation_exists(
+                self.client, "DE:AD:BE:EF:00:01", "192.168.88.10", "nas01"
+            )
+            is True
+        )
 
     def test_wrong_ip_returns_false(self):
-        assert check_dhcp_reservation_exists(
-            self.client, "de:ad:be:ef:00:01", "192.168.88.99", "nas01"
-        ) is False
+        assert (
+            check_dhcp_reservation_exists(
+                self.client, "de:ad:be:ef:00:01", "192.168.88.99", "nas01"
+            )
+            is False
+        )
 
     def test_wrong_name_returns_false(self):
-        assert check_dhcp_reservation_exists(
-            self.client, "de:ad:be:ef:00:01", "192.168.88.10", "wrongname"
-        ) is False
+        assert (
+            check_dhcp_reservation_exists(
+                self.client, "de:ad:be:ef:00:01", "192.168.88.10", "wrongname"
+            )
+            is False
+        )
 
     def test_nonexistent_returns_false(self):
-        assert check_dhcp_reservation_exists(
-            self.client, "aa:bb:cc:dd:ee:ff", "10.0.0.1", "unknown"
-        ) is False
+        assert (
+            check_dhcp_reservation_exists(
+                self.client, "aa:bb:cc:dd:ee:ff", "10.0.0.1", "unknown"
+            )
+            is False
+        )
 
 
 class TestAddDhcpReservation:

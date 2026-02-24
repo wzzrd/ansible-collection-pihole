@@ -97,10 +97,7 @@ def get_group(client: PiholeApiClient, name: str) -> Optional[Dict[str, Any]]:
 
 
 def add_group(
-    client: PiholeApiClient,
-    name: str,
-    comment: str = "",
-    enabled: bool = True
+    client: PiholeApiClient, name: str, comment: str = "", enabled: bool = True
 ) -> Dict[str, Any]:
     """
     Add a new group.
@@ -119,11 +116,7 @@ def add_group(
         PiholeConnectionError: If connection fails
         PiholeApiError: For other API errors
     """
-    data = {
-        "name": name,
-        "comment": comment,
-        "enabled": enabled
-    }
+    data = {"name": name, "comment": comment, "enabled": enabled}
 
     try:
         response = client._request("POST", "api/groups", json_data=data)
@@ -141,7 +134,7 @@ def update_group(
     name: str,
     new_name: Optional[str] = None,
     comment: Optional[str] = None,
-    enabled: Optional[bool] = None
+    enabled: Optional[bool] = None,
 ) -> Dict[str, Any]:
     """
     Update an existing group.
@@ -174,8 +167,12 @@ def update_group(
         data["name"] = new_name
 
     # Preserve existing values if not specified
-    data["comment"] = comment if comment is not None else current_group.get("comment", "")
-    data["enabled"] = enabled if enabled is not None else current_group.get("enabled", True)
+    data["comment"] = (
+        comment if comment is not None else current_group.get("comment", "")
+    )
+    data["enabled"] = (
+        enabled if enabled is not None else current_group.get("enabled", True)
+    )
 
     try:
         response = client._request("PUT", f"api/groups/{name}", json_data=data)
@@ -210,10 +207,7 @@ def delete_group(client: PiholeApiClient, name: str) -> Dict[str, Any]:
 
         # Handle empty successful responses
         if response.status_code == 204 or not response.text:
-            return {
-                "success": True,
-                "message": f"Group '{name}' deleted successfully"
-            }
+            return {"success": True, "message": f"Group '{name}' deleted successfully"}
 
         response.raise_for_status()
 
@@ -224,7 +218,7 @@ def delete_group(client: PiholeApiClient, name: str) -> Dict[str, Any]:
             return {
                 "success": True,
                 "message": f"Group '{name}' deleted successfully",
-                "raw_response": response.text
+                "raw_response": response.text,
             }
 
     except PiholeNotFoundError:
@@ -236,8 +230,7 @@ def delete_group(client: PiholeApiClient, name: str) -> Dict[str, Any]:
 
 
 def batch_delete_groups(
-    client: PiholeApiClient,
-    group_names: List[str]
+    client: PiholeApiClient, group_names: List[str]
 ) -> Dict[str, Any]:
     """
     Delete multiple groups in a single batch operation.
@@ -262,9 +255,7 @@ def batch_delete_groups(
 
     try:
         response = client._request(
-            "POST",
-            "api/groups:batchDelete",
-            json_data=formatted_names
+            "POST", "api/groups:batchDelete", json_data=formatted_names
         )
 
         # 204 No Content - Success
@@ -272,7 +263,7 @@ def batch_delete_groups(
             return {
                 "success": True,
                 "message": f"Successfully deleted {len(group_names)} groups",
-                "status_code": 204
+                "status_code": 204,
             }
 
         # Error handling for specific status codes
@@ -280,14 +271,12 @@ def batch_delete_groups(
             error_messages = {
                 400: "Bad request - invalid data format",
                 401: "Unauthorized - invalid session ID",
-                404: "Not found - one or more groups don't exist"
+                404: "Not found - one or more groups don't exist",
             }
             error_msg = error_messages.get(response.status_code, "Unknown error")
 
             raise PiholeApiError(
-                error_msg,
-                status_code=response.status_code,
-                response_text=response.text
+                error_msg, status_code=response.status_code, response_text=response.text
             )
 
         response.raise_for_status()
@@ -295,7 +284,7 @@ def batch_delete_groups(
         # This should rarely be reached
         return {
             "success": True,
-            "message": f"Successfully deleted {len(group_names)} groups"
+            "message": f"Successfully deleted {len(group_names)} groups",
         }
 
     except PiholeError:
@@ -304,10 +293,7 @@ def batch_delete_groups(
         raise PiholeApiError(f"Failed to batch delete groups: {str(e)}")
 
 
-def group_names_to_ids(
-    client: PiholeApiClient,
-    group_names: List[str]
-) -> List[int]:
+def group_names_to_ids(client: PiholeApiClient, group_names: List[str]) -> List[int]:
     """
     Convert group names to their corresponding IDs.
 

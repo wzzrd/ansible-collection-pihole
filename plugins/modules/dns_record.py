@@ -212,7 +212,9 @@ def main():
                                 == ipaddress.ip_address(ip_param).version
                             )
                         except ValueError:
-                            same_family = True  # conservative: treat as conflict if unparseable
+                            same_family = (
+                                True  # conservative: treat as conflict if unparseable
+                            )
                         if same_family:
                             conflicts_to_remove.append((rec_ip, rec_name))
 

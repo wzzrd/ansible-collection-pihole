@@ -59,11 +59,7 @@ def get_cname_records(client: PiholeApiClient) -> List[str]:
         raise PiholeApiError(f"Failed to retrieve CNAME records: {str(e)}")
 
 
-def check_cname_record_exists(
-    client: PiholeApiClient,
-    cname: str,
-    target: str
-) -> bool:
+def check_cname_record_exists(client: PiholeApiClient, cname: str, target: str) -> bool:
     """
     Check if a specific CNAME record exists.
 
@@ -88,9 +84,7 @@ def check_cname_record_exists(
 
 
 def add_cname_record(
-    client: PiholeApiClient,
-    cname: str,
-    target: str
+    client: PiholeApiClient, cname: str, target: str
 ) -> Dict[str, Any]:
     """
     Add a new CNAME record.
@@ -131,11 +125,7 @@ def add_cname_record(
         )
 
 
-def delete_cname_record(
-    client: PiholeApiClient,
-    cname: str,
-    target: str
-) -> None:
+def delete_cname_record(client: PiholeApiClient, cname: str, target: str) -> None:
     """
     Delete a CNAME record.
 

@@ -356,13 +356,13 @@ def main():
                 delete_success = delete_domain(
                     api_client, domain_name, param_type, param_kind
                 )
-                if delete_success: # Successfully deleted
+                if delete_success:  # Successfully deleted
                     module.exit_json(
                         changed=True,
                         msg=f"Domain '{domain_name}' removed from {param_type}/{param_kind}",
                     )
-                else: # delete_domain returned False, meaning it was NOT found by the DELETE call
-                      # This implies it was already absent from that specific list when deletion was attempted.
+                else:  # delete_domain returned False, meaning it was NOT found by the DELETE call
+                    # This implies it was already absent from that specific list when deletion was attempted.
                     module.exit_json(
                         changed=False,
                         msg=f"Domain '{domain_name}' was already absent from {param_type}/{param_kind} when deletion was attempted.",

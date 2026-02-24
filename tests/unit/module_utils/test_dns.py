@@ -17,10 +17,10 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.dns import (
     get_static_dns_records,
 )
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _make_response(status_code=200, json_data=None, text=""):
     resp = MagicMock(spec=requests.Response)
@@ -56,6 +56,7 @@ DNS_RESPONSE = {
 # ---------------------------------------------------------------------------
 # get_static_dns_records
 # ---------------------------------------------------------------------------
+
 
 class TestGetStaticDnsRecords:
     def test_returns_list(self):
@@ -98,39 +99,54 @@ class TestGetStaticDnsRecords:
 # check_static_dns_record_exists
 # ---------------------------------------------------------------------------
 
+
 class TestCheckStaticDnsRecordExists:
     def setup_method(self):
         self.client = _mock_client(_make_response(200, DNS_RESPONSE))
 
     def test_existing_record_returns_true(self):
-        assert check_static_dns_record_exists(
-            self.client, "192.168.88.10", "nas01.acme.lab"
-        ) is True
+        assert (
+            check_static_dns_record_exists(
+                self.client, "192.168.88.10", "nas01.acme.lab"
+            )
+            is True
+        )
 
     def test_missing_record_returns_false(self):
-        assert check_static_dns_record_exists(
-            self.client, "192.168.88.99", "unknown.acme.lab"
-        ) is False
+        assert (
+            check_static_dns_record_exists(
+                self.client, "192.168.88.99", "unknown.acme.lab"
+            )
+            is False
+        )
 
     def test_partial_ip_returns_false(self):
-        assert check_static_dns_record_exists(
-            self.client, "192.168.88.1", "nas01.acme.lab"
-        ) is False
+        assert (
+            check_static_dns_record_exists(
+                self.client, "192.168.88.1", "nas01.acme.lab"
+            )
+            is False
+        )
 
     def test_partial_name_returns_false(self):
-        assert check_static_dns_record_exists(
-            self.client, "192.168.88.10", "nas01"
-        ) is False
+        assert (
+            check_static_dns_record_exists(self.client, "192.168.88.10", "nas01")
+            is False
+        )
 
     def test_ipv6_record_found(self):
-        assert check_static_dns_record_exists(
-            self.client, "fd00:dead:beef::10", "nas01.acme.lab"
-        ) is True
+        assert (
+            check_static_dns_record_exists(
+                self.client, "fd00:dead:beef::10", "nas01.acme.lab"
+            )
+            is True
+        )
 
 
 # ---------------------------------------------------------------------------
 # add_static_dns_record
 # ---------------------------------------------------------------------------
+
 
 class TestAddStaticDnsRecord:
     def test_returns_api_response(self):
@@ -174,6 +190,7 @@ class TestAddStaticDnsRecord:
 # ---------------------------------------------------------------------------
 # delete_static_dns_record
 # ---------------------------------------------------------------------------
+
 
 class TestDeleteStaticDnsRecord:
     def test_successful_delete_returns_none(self):

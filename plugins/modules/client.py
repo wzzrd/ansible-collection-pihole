@@ -5,14 +5,24 @@
 # GNU General Public License v3.0+
 
 from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import PiholeApiClient
-from ansible_collections.wzzrd.pihole.plugins.module_utils.client import (
-    get_client, add_client, update_client, delete_client
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
 )
-from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import group_names_to_ids
+from ansible_collections.wzzrd.pihole.plugins.module_utils.client import (
+    get_client,
+    add_client,
+    update_client,
+    delete_client,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
+    group_names_to_ids,
+)
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError, PiholeConnectionError,
-    PiholeApiError, PiholeValidationError, PiholeNotFoundError
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+    PiholeValidationError,
+    PiholeNotFoundError,
 )
 
 DOCUMENTATION = r"""
@@ -164,7 +174,9 @@ def main():
         api_client_instance = PiholeApiClient(pihole_url, sid)
 
         try:
-            desired_group_ids = group_names_to_ids(api_client_instance, group_names_param)
+            desired_group_ids = group_names_to_ids(
+                api_client_instance, group_names_param
+            )
         except PiholeValidationError as e:
             module.fail_json(msg=str(e))
             return
@@ -184,7 +196,9 @@ def main():
                     # Treat null from API as an empty string for comparison purposes if user specified an empty string.
                     current_comment_on_pihole = existing_client_data.get("comment")
                     if current_comment_on_pihole is None:
-                        current_comment_on_pihole = "" # Treat API null as "" for comparison with user's ""
+                        current_comment_on_pihole = (
+                            ""  # Treat API null as "" for comparison with user's ""
+                        )
 
                     if current_comment_on_pihole != comment_param:
                         needs_update = True
@@ -197,39 +211,75 @@ def main():
 
                 if needs_update:
                     if module.check_mode:
-                        module.exit_json(changed=True, msg=f"Would update client '{client_identifier}'")
+                        module.exit_json(
+                            changed=True,
+                            msg=f"Would update client '{client_identifier}'",
+                        )
 
-                    result = update_client(api_client_instance,
-                                           client_identifier,
-                                           comment=comment_param, # Pass user's specified comment (or None)
-                                           group_ids=desired_group_ids)
+                    result = update_client(
+                        api_client_instance,
+                        client_identifier,
+                        comment=comment_param,  # Pass user's specified comment (or None)
+                        group_ids=desired_group_ids,
+                    )
 
-                    updated_client_details = result.get("clients", [{}])[0] if result.get("clients") else {}
-                    module.exit_json(changed=True, result=result, msg=f"Client '{client_identifier}' updated", client=updated_client_details)
+                    updated_client_details = (
+                        result.get("clients", [{}])[0] if result.get("clients") else {}
+                    )
+                    module.exit_json(
+                        changed=True,
+                        result=result,
+                        msg=f"Client '{client_identifier}' updated",
+                        client=updated_client_details,
+                    )
                 else:
-                    module.exit_json(changed=False, msg=f"Client '{client_identifier}' already exists with the specified properties", client=existing_client_data)
-            else: # Client doesn't exist, create it
+                    module.exit_json(
+                        changed=False,
+                        msg=f"Client '{client_identifier}' already exists with the specified properties",
+                        client=existing_client_data,
+                    )
+            else:  # Client doesn't exist, create it
                 if module.check_mode:
-                    module.exit_json(changed=True, msg=f"Would create client '{client_identifier}'")
+                    module.exit_json(
+                        changed=True, msg=f"Would create client '{client_identifier}'"
+                    )
 
-                result = add_client(api_client_instance,
-                                    client_identifier,
-                                    comment=comment_param, # Pass user's specified comment (or None)
-                                    group_ids=desired_group_ids)
-                created_client_details = result.get("clients", [{}])[0] if result.get("clients") else {}
-                module.exit_json(changed=True, result=result, msg=f"Client '{client_identifier}' created", client=created_client_details)
+                result = add_client(
+                    api_client_instance,
+                    client_identifier,
+                    comment=comment_param,  # Pass user's specified comment (or None)
+                    group_ids=desired_group_ids,
+                )
+                created_client_details = (
+                    result.get("clients", [{}])[0] if result.get("clients") else {}
+                )
+                module.exit_json(
+                    changed=True,
+                    result=result,
+                    msg=f"Client '{client_identifier}' created",
+                    client=created_client_details,
+                )
 
         elif state == "absent":
             if exists:
                 if module.check_mode:
-                    module.exit_json(changed=True, msg=f"Would delete client '{client_identifier}'")
+                    module.exit_json(
+                        changed=True, msg=f"Would delete client '{client_identifier}'"
+                    )
                 delete_success = delete_client(api_client_instance, client_identifier)
                 if delete_success:
-                    module.exit_json(changed=True, msg=f"Client '{client_identifier}' deleted")
+                    module.exit_json(
+                        changed=True, msg=f"Client '{client_identifier}' deleted"
+                    )
                 else:
-                    module.exit_json(changed=False, msg=f"Client '{client_identifier}' was already absent when deletion was attempted.")
+                    module.exit_json(
+                        changed=False,
+                        msg=f"Client '{client_identifier}' was already absent when deletion was attempted.",
+                    )
             else:
-                module.exit_json(changed=False, msg=f"Client '{client_identifier}' does not exist")
+                module.exit_json(
+                    changed=False, msg=f"Client '{client_identifier}' does not exist"
+                )
 
     except PiholeValidationError as e:
         module.fail_json(msg=str(e))
@@ -243,6 +293,7 @@ def main():
         module.fail_json(msg=f"API error: {str(e)}")
     except Exception as e:
         module.fail_json(msg=f"Unexpected error: {str(e)}")
+
 
 if __name__ == "__main__":
     main()
