@@ -1,5 +1,16 @@
 # Changelog
 
+## v1.0.3 (2026-03-15)
+
+### Maintenance
+- Add copyright headers to all module and module_utils files
+- Remove executable bit and shebangs from plugin files
+- Remove unused imports across modules and module_utils
+- Refactor `api_client.py` for clarity and test coverage
+- Expand unit tests for `api_client`
+- Add Makefile targets for common development tasks
+- Ignore `tests/output/` in `.gitignore`
+
 ## v1.0.2 (2026-02-24)
 
 ### Testing
