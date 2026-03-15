@@ -1,6 +1,6 @@
 """Tests for plugins/module_utils/groups.py"""
 
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock
 
 import pytest
 import requests

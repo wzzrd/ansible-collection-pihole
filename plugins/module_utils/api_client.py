@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 """
@@ -16,23 +15,45 @@ separate utility modules that use this client.
 
 from __future__ import annotations
 
+import json
+import urllib.error
+import urllib.parse
 from typing import Any, Dict, Optional
 
-import requests
-import urllib.parse  # Keep for potential future use if any core request needs it, though not directly used by kept methods.
-
-# Suppress InsecureRequestWarning for self-signed certificates common in homelab Pi-hole setups.
-requests.packages.urllib3.disable_warnings(
-    requests.packages.urllib3.exceptions.InsecureRequestWarning
-)
+from ansible.module_utils.urls import open_url
 
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeApiError,
     PiholeAuthError,
     PiholeConnectionError,
     PiholeNotFoundError,
-    # PiholeValidationError is not directly raised by the core client, but by utilities.
 )
+
+
+class PiholeResponse:
+    """Minimal HTTP response wrapper matching the requests.Response interface."""
+
+    def __init__(self, status_code: int, body: bytes) -> None:
+        self.status_code = status_code
+        self._body = body
+
+    @property
+    def text(self) -> str:
+        return self._body.decode("utf-8", errors="replace")
+
+    def json(self) -> Any:
+        try:
+            return json.loads(self._body)
+        except ValueError as exc:
+            raise PiholeApiError(f"Invalid JSON response: {exc}")
+
+    def raise_for_status(self) -> None:
+        if self.status_code >= 400:
+            raise PiholeApiError(
+                f"HTTP error {self.status_code}",
+                status_code=self.status_code,
+                response_text=self.text,
+            )
 
 
 class PiholeApiClient:
@@ -44,15 +65,7 @@ class PiholeApiClient:
     functions in other module_utils files that utilize this client.
     """
 
-    def __init__(self, base_url: str, sid: str, timeout: int = 10):
-        """
-        Initialize the Pi-hole API client.
-
-        Args:
-            base_url: Base URL of the Pi-hole instance (e.g., https://pihole.local).
-            sid: Session ID for authentication.
-            timeout: Default request timeout in seconds.
-        """
+    def __init__(self, base_url: str, sid: str, timeout: int = 10) -> None:
         self.base_url = base_url.rstrip("/")
         self.sid = sid
         self.timeout = timeout
@@ -65,7 +78,7 @@ class PiholeApiClient:
         json_data: Optional[Dict[str, Any]] = None,
         params: Optional[Dict[str, Any]] = None,
         timeout: Optional[int] = None,
-    ) -> requests.Response:
+    ) -> PiholeResponse:
         """
         Make a request to the Pi-hole API with appropriate error handling.
 
@@ -77,64 +90,81 @@ class PiholeApiClient:
             timeout: Optional custom timeout (defaults to self.timeout).
 
         Returns:
-            The API response object.
+            A PiholeResponse wrapping the API response.
 
         Raises:
             PiholeAuthError: If authentication fails (401).
             PiholeNotFoundError: If the resource is not found (404).
-            PiholeConnectionError: If connection to Pi-hole fails (timeout, network error).
+            PiholeConnectionError: If connection to Pi-hole fails.
             PiholeApiError: For other HTTP errors or issues with the API response.
         """
         url = f"{self.base_url}/{endpoint.lstrip('/')}"
+        if params:
+            url = f"{url}?{urllib.parse.urlencode(params)}"
+
         request_timeout = timeout if timeout is not None else self.timeout
 
-        try:
-            response = requests.request(
-                method=method,
-                url=url,
-                json=json_data,
-                params=params,
-                headers=self.headers,
-                timeout=request_timeout,
-                verify=False,
-            )
+        body = None
+        headers = dict(self.headers)
+        if json_data is not None:
+            body = json.dumps(json_data).encode("utf-8")
+            headers["Content-Type"] = "application/json"
 
-            if response.status_code == 401:
+        try:
+            resp = open_url(
+                url,
+                data=body,
+                headers=headers,
+                method=method,
+                validate_certs=False,
+                timeout=request_timeout,
+            )
+            return PiholeResponse(resp.status, resp.read())
+
+        except urllib.error.HTTPError as exc:
+            status_code = exc.code
+            response_body = exc.read()
+            response_text = response_body.decode("utf-8", errors="replace")
+
+            if status_code == 401:
                 raise PiholeAuthError(
                     "Authentication failed. Invalid or expired session ID.",
-                    status_code=response.status_code,
-                    response_text=response.text,
+                    status_code=status_code,
+                    response_text=response_text,
                 )
-
-            if response.status_code == 404:
+            if status_code == 404:
                 raise PiholeNotFoundError(
                     f"Resource not found at {url}",
-                    status_code=response.status_code,
-                    response_text=response.text,
+                    status_code=status_code,
+                    response_text=response_text,
                 )
 
-            # Other HTTP errors will be caught by response.raise_for_status()
-            # or handled by the calling utility function if specific logic is needed.
-            return response
+            return PiholeResponse(status_code, response_body)
 
-        except requests.exceptions.Timeout:
+        except urllib.error.URLError as exc:
+            if "timed out" in str(exc.reason).lower():
+                raise PiholeConnectionError(
+                    f"Connection to {self.base_url} timed out after {request_timeout} seconds"
+                )
             raise PiholeConnectionError(
-                f"Connection to {self.base_url} timed out after {request_timeout} seconds"
+                f"Failed to connect to {self.base_url}: {str(exc.reason)}"
             )
-        except requests.exceptions.ConnectionError as e:
-            raise PiholeConnectionError(
-                f"Failed to connect to {self.base_url}: {str(e)}"
-            )
-        except requests.exceptions.RequestException as e:
-            # This is a catch-all for other requests-related exceptions
-            raise PiholeApiError(f"Request error for {url}: {str(e)}")
+
+        except (
+            PiholeAuthError,
+            PiholeNotFoundError,
+            PiholeConnectionError,
+            PiholeApiError,
+        ):
+            raise
+
+        except Exception as exc:
+            raise PiholeApiError(f"Request error for {url}: {str(exc)}")
 
     @classmethod
     def authenticate(cls, base_url: str, password: str, timeout: int = 10) -> str:
         """
         Authenticate with Pi-hole and obtain a session ID.
-
-        This method is primarily used by the `pihole_auth` Ansible module.
 
         Args:
             base_url: Base URL of the Pi-hole instance.
@@ -147,23 +177,22 @@ class PiholeApiClient:
         Raises:
             PiholeAuthError: If authentication fails or no session ID is returned.
             PiholeConnectionError: If connection to Pi-hole fails.
-            PiholeApiError: If the API returns an invalid response (e.g., non-JSON).
+            PiholeApiError: If the API returns an invalid response.
         """
         auth_url = f"{base_url.rstrip('/')}/api/auth"
 
         try:
-            response = requests.post(
-                auth_url, json={"password": password}, timeout=timeout, verify=False
+            body = json.dumps({"password": password}).encode("utf-8")
+            resp = open_url(
+                auth_url,
+                data=body,
+                headers={"Content-Type": "application/json"},
+                method="POST",
+                validate_certs=False,
+                timeout=timeout,
             )
+            data: Dict[str, Any] = json.loads(resp.read())
 
-            if response.status_code != 200:
-                raise PiholeAuthError(
-                    f"Authentication failed with status code {response.status_code}",
-                    status_code=response.status_code,
-                    response_text=response.text,
-                )
-
-            data: Dict[str, Any] = response.json()
             session_data = data.get("session", {})
             sid = session_data.get("sid")
 
@@ -175,21 +204,31 @@ class PiholeApiClient:
 
             return sid
 
-        except requests.exceptions.Timeout:
+        except urllib.error.HTTPError as exc:
+            status_code = exc.code
+            response_text = exc.read().decode("utf-8", errors="replace")
+            raise PiholeAuthError(
+                f"Authentication failed with status code {status_code}",
+                status_code=status_code,
+                response_text=response_text,
+            )
+
+        except urllib.error.URLError as exc:
+            if "timed out" in str(exc.reason).lower():
+                raise PiholeConnectionError(
+                    f"Connection to {auth_url} timed out after {timeout} seconds"
+                )
             raise PiholeConnectionError(
-                f"Connection to {auth_url} timed out after {timeout} seconds"
+                f"Failed to connect to {auth_url}: {str(exc.reason)}"
             )
-        except requests.exceptions.ConnectionError as e:
-            raise PiholeConnectionError(f"Failed to connect to {auth_url}: {str(e)}")
-        except requests.exceptions.RequestException as e:
-            raise PiholeApiError(f"Request error during authentication: {str(e)}")
-        except ValueError as e:  # Handles JSON decoding errors
+
+        except (PiholeAuthError, PiholeConnectionError, PiholeApiError):
+            raise
+
+        except ValueError as exc:
             raise PiholeApiError(
-                f"Invalid JSON response during authentication: {str(e)}",
-                response_text=response.text if "response" in locals() else None,
+                f"Invalid JSON response during authentication: {str(exc)}"
             )
-        except Exception as e:
-            # Catch any other unexpected exceptions and wrap them
-            if isinstance(e, (PiholeAuthError, PiholeConnectionError, PiholeApiError)):
-                raise
-            raise PiholeApiError(f"Unexpected error during authentication: {str(e)}")
+
+        except Exception as exc:
+            raise PiholeApiError(f"Unexpected error during authentication: {str(exc)}")

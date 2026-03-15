@@ -1,7 +1,6 @@
-#!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 """
@@ -206,7 +205,7 @@ def update_domain(
         ... )
     """
     # Get current domain details
-    current_domain, _ = get_domain(client, domain, current_type, current_kind)
+    current_domain, _location = get_domain(client, domain, current_type, current_kind)
 
     if not current_domain:
         raise PiholeValidationError(

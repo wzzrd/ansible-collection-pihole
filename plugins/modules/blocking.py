@@ -1,30 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.blocking import (
-    get_blocking_status,
-    set_blocking_status,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_blocking
+module: blocking
 
 short_description: Manage Pi-hole DNS blocking status via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to enable or disable Pi-hole DNS blocking.
@@ -32,7 +18,7 @@ description:
   - You must provide a valid session ID (SID) for authentication.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -45,7 +31,6 @@ options:
       - Session ID used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   enabled:
     description:
       - Whether Pi-hole blocking should be enabled or disabled.
@@ -69,8 +54,7 @@ options:
     type: bool
     default: false
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -117,9 +101,23 @@ status:
       returned: always
     timer:
       description: Remaining seconds on timer if one is active, null otherwise.
-      type: int or null
+      type: int
       returned: always
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.blocking import (
+    get_blocking_status,
+    set_blocking_status,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+)
 
 
 def main():

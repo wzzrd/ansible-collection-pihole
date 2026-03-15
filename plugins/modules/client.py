@@ -1,37 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.client import (
-    get_client,
-    add_client,
-    update_client,
-    delete_client,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
-    group_names_to_ids,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-    PiholeValidationError,
-    PiholeNotFoundError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_client
+module: client
 
 short_description: Manage Pi-hole clients via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to create, update, or remove client configurations in Pi-hole.
@@ -39,7 +18,7 @@ description:
   - You must provide a valid session ID (SID) for authentication.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -52,7 +31,6 @@ options:
       - Session ID used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   client:
     description:
       - The client identifier. Can be an IP address (IPv4/IPv6), MAC address, hostname, or interface name.
@@ -87,8 +65,7 @@ options:
     required: false
     type: str
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -139,6 +116,27 @@ result:
   type: dict
   returned: when a client is created, updated, or deleted
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.client import (
+    get_client,
+    add_client,
+    update_client,
+    delete_client,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
+    group_names_to_ids,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+    PiholeValidationError,
+    PiholeNotFoundError,
+)
 
 
 def main():

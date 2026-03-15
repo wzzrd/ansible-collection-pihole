@@ -1,30 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
-    get_groups,
-    batch_delete_groups,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_group_batch_delete
+module: batch_delete_groups
 
 short_description: Batch delete multiple Pi-hole groups via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to delete multiple groups in a single operation from a Pi-hole instance using its API.
@@ -32,7 +18,7 @@ description:
   - You must provide a valid session ID (SID) for authentication.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -45,7 +31,6 @@ options:
       - Session ID used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   names:
     description:
       - A list of group names to delete.
@@ -53,8 +38,7 @@ options:
     type: list
     elements: str
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -89,6 +73,20 @@ deleted_count:
   type: int
   returned: always
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
+    get_groups,
+    batch_delete_groups,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+)
 
 
 def main():

@@ -23,12 +23,13 @@ The module itself just defines argument_spec and delegates to a `run_module(modu
 
 ### `api_client.py`
 
-Central HTTP client (`PiholeClient`). All requests go through this class.
+Central HTTP client (`PiholeApiClient`). All requests go through this class.
 
 - **Base URL** set at construction time.
 - **Auth header:** `sid: <value>` — sent on every authenticated request (not a cookie, not `X-FTL-SID`).
-- **Self-signed cert warnings** are suppressed via `urllib3.disable_warnings`.
-- Methods: `get(path)`, `post(path, data)`, `put(path, data)`, `delete(path)`.
+- **SSL certificate verification** is disabled via `validate_certs=False` on `ansible.module_utils.urls.open_url`.
+- **`PiholeResponse`** wrapper class provides `.status_code`, `.text`, `.json()`, and `.raise_for_status()`.
+- Key methods: `_request(method, endpoint, json_data, params, timeout)`, `authenticate(base_url, password)` (classmethod).
 
 ### `api_errors.py`
 
@@ -101,10 +102,17 @@ CNAME response format: `json.config.dns.cnameRecords` → list of `"alias,target
 
 ## Testing
 
+### Development setup
+
+The working directory is `~/work/ansible/wzzrd/pihole`. The installed collection path (`~/.ansible/collections/ansible_collections/wzzrd/pihole`) is a symlink to it, so edits are live immediately — no `ansible-galaxy collection install` needed.
+
+A `Makefile` wraps all test commands. Run `make help` to see available targets.
+
 ### Unit tests
 
 ```bash
-pip install -r tests/requirements.txt
+make unit
+# or directly:
 pytest tests/unit/ -v
 ```
 
@@ -113,24 +121,23 @@ pytest tests/unit/ -v
 ### Black formatting
 
 ```bash
-black --check plugins/ tests/
+make black-check   # check only
+make black         # auto-fix
 ```
 
-Or to auto-fix:
+### ansible-test sanity
+
+`ansible-test` requires the collection to be at a path ending in `ansible_collections/wzzrd/pihole`. The Makefile handles the `cd` automatically:
 
 ```bash
-black plugins/ tests/
+make sanity
 ```
 
 ### Molecule integration tests
 
 ```bash
-# Install the collection first (required — modules are loaded from the installed path)
-ansible-galaxy collection install . --upgrade
-
-# Run a scenario
-molecule test -s dns_dhcp
-molecule test -s blocklists
+make molecule-dns
+make molecule-blocklists
 
 # Test against a specific Pi-hole version
 PIHOLE_VERSION=2024.07.0 molecule test -s dns_dhcp

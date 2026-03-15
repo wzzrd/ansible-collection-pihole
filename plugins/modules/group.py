@@ -1,34 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
-    get_group,
-    add_group,
-    update_group,
-    delete_group,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-    PiholeValidationError,
-    PiholeNotFoundError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_group
+module: group
 
 short_description: Manage Pi-hole groups via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to create, update, or remove groups in a Pi-hole
@@ -38,7 +20,7 @@ description:
   - Supports renaming groups by providing both 'name' and 'new_name' parameters.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -51,7 +33,6 @@ options:
       - Session ID used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   name:
     description:
       - The name of the group to manage.
@@ -83,8 +64,7 @@ options:
     required: false
     type: str
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -150,6 +130,24 @@ result:
   type: dict
   returned: when a group is created, updated, or deleted
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
+    get_group,
+    add_group,
+    update_group,
+    delete_group,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+    PiholeValidationError,
+    PiholeNotFoundError,
+)
 
 
 def main():

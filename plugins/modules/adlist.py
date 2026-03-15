@@ -1,37 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.adlist import (
-    get_adlist,
-    add_adlist,
-    update_adlist,
-    delete_adlist,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
-    group_names_to_ids,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-    PiholeValidationError,
-    PiholeNotFoundError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_adlist
+module: adlist
 
 short_description: Manage Pi-hole adlists via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to create, update, or remove adlists in a Pi-hole
@@ -40,7 +19,7 @@ description:
   - You must provide a valid session ID (SID) for authentication.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -53,7 +32,6 @@ options:
       - Session ID used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   address:
     description:
       - The URL of the adlist to manage.
@@ -96,8 +74,7 @@ options:
     required: false
     type: str
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -162,6 +139,27 @@ result:
   type: dict
   returned: when an adlist is created, updated, or deleted
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.adlist import (
+    get_adlist,
+    add_adlist,
+    update_adlist,
+    delete_adlist,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.groups import (
+    group_names_to_ids,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+    PiholeValidationError,
+    PiholeNotFoundError,
+)
 
 
 def main():

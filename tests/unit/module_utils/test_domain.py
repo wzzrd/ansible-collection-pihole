@@ -7,7 +7,6 @@ import pytest
 import requests
 
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeApiError,
     PiholeAuthError,
     PiholeNotFoundError,
     PiholeValidationError,

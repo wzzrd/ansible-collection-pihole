@@ -1,36 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-import ipaddress
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.dns import (
-    get_static_dns_records,
-    check_static_dns_record_exists,
-    add_static_dns_record,
-    delete_static_dns_record,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-    PiholeValidationError,
-    PiholeNotFoundError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_dns_record
+module: dns_record
 
 short_description: Manage Pi-hole static DNS records (A records) via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to create or delete static A records (IP → hostname)
@@ -39,7 +19,7 @@ description:
   - You must provide a valid session ID (SID) for authentication.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -52,7 +32,6 @@ options:
       - Session ID used for authenticating with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   ip:
     description:
       - The IP address to associate with the hostname.
@@ -85,8 +64,7 @@ options:
     type: bool
     default: true
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -140,6 +118,26 @@ result:
   type: dict
   returned: when state is present and a record is added and successful
 """
+
+import ipaddress
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.dns import (
+    get_static_dns_records,
+    check_static_dns_record_exists,
+    add_static_dns_record,
+    delete_static_dns_record,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+    PiholeValidationError,
+    PiholeNotFoundError,
+)
 
 
 def main():

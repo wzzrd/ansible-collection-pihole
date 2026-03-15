@@ -1,31 +1,16 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.dhcp import (
-    check_dhcp_reservation_exists,
-    add_dhcp_reservation,
-    delete_dhcp_reservation,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_dhcp_reservation
+module: dhcp_reservation
 
 short_description: Manage Pi-hole DHCP reservations via its API
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module allows you to create or delete DHCP reservations in a Pi-hole
@@ -35,7 +20,7 @@ description:
   - You must provide a valid session ID (SID) for authentication.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -48,7 +33,6 @@ options:
       - Session ID used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
   hw:
     description:
       - Hardware (MAC) address of the device to reserve a DHCP lease for.
@@ -72,8 +56,7 @@ options:
     required: false
     type: str
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -112,6 +95,21 @@ result:
   type: dict
   returned: when state is present and a reservation is added
 """
+
+from ansible.module_utils.basic import AnsibleModule
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.dhcp import (
+    check_dhcp_reservation_exists,
+    add_dhcp_reservation,
+    delete_dhcp_reservation,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+)
 
 
 def main():

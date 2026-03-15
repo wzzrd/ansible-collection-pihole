@@ -1,29 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-# Copyright: (c) Your Name or Organization
+# Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
-
-from ansible.module_utils.basic import AnsibleModule
-
-# PiholeApiClient still contains the static authenticate method
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
-    PiholeApiClient,
-)
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeAuthError,
-    PiholeConnectionError,
-    PiholeApiError,
-)
 
 DOCUMENTATION = r"""
 ---
-module: pihole_auth
+module: auth
 
 short_description: >
   Authenticate with the Pi-hole API and retrieve a session ID.
 
-version_added: "1.0"
+version_added: "1.0.0"
 
 description:
   - This module performs authentication against the Pi-hole web API.
@@ -33,7 +21,7 @@ description:
     C(changed=True) for compatibility with workflows.
 
 author:
-  - Your Name (@yourhandle)
+  - Maxim Burgerhout (@wzzrd)
 
 options:
   pihole:
@@ -46,10 +34,8 @@ options:
       - The password used to authenticate with the Pi-hole API.
     required: true
     type: str
-    no_log: true
 
-requirements:
-  - requests
+requirements: []
 """
 
 EXAMPLES = r"""
@@ -82,6 +68,18 @@ msg:
   type: str
   returned: on failure
 """
+
+from ansible.module_utils.basic import AnsibleModule
+
+# PiholeApiClient still contains the static authenticate method
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeApiClient,
+)
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+    PiholeConnectionError,
+    PiholeApiError,
+)
 
 
 def main() -> None:

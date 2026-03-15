@@ -13,7 +13,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.adlist import (
     update_adlist,
 )
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
-    PiholeApiError,
     PiholeAuthError,
     PiholeNotFoundError,
     PiholeValidationError,
