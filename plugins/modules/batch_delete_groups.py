@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
-# GNU General Public License v3.0+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 DOCUMENTATION = r"""
@@ -44,7 +44,7 @@ requirements: []
 
 EXAMPLES = r"""
 - name: Delete multiple groups at once
-  wzzrd.pihole.group_batch_delete:
+  wzzrd.pihole.batch_delete_groups:
     pihole: "https://pihole.local"
     sid: "{{ pihole_sid }}"
     names:

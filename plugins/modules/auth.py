@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
-# GNU General Public License v3.0+
+# GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
 DOCUMENTATION = r"""
@@ -18,8 +18,8 @@ description:
   - This module performs authentication against the Pi-hole web API.
   - It returns a valid session ID (SID) which can be used to perform authorized
     API calls with other Pi-hole modules.
-  - The module does not change the state of the system, but marks
-    C(changed=True) for compatibility with workflows.
+  - The module does not change the state of the system and always returns
+    C(changed=False).
 
 author:
   - Maxim Burgerhout (@wzzrd)
@@ -60,7 +60,7 @@ sid:
   sample: "3f93ec7b846ebff8ec9b6219c6c0a2e6"
 
 changed:
-  description: Always true, for compatibility with idempotent flows.
+  description: Always false; this module performs a read-only operation.
   type: bool
   returned: always
 
