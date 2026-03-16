@@ -57,7 +57,6 @@ for _ns in [
 for _mod in [
     "api_errors",
     "api_client",
-    "auth",
     "dns",
     "cname",
     "dhcp",
