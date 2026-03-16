@@ -1,0 +1,65 @@
+# TODO — Pending improvement points
+
+## Major
+
+- **Add unit tests for the `modules/` layer**
+  All 269 tests currently cover `module_utils/` only. The module files contain
+  non-trivial logic: idempotence detection (`group.py`), multi-step state transitions
+  (`dns_record.py`), filter-then-batch (`batch_delete_groups.py`). None of it is
+  exercised at the module level.
+
+## Medium
+
+- **Consolidate `_make_response()` / `_mock_client()` into `conftest.py`**
+  Both helpers are copy-pasted identically across all 8 test files. They belong in
+  `tests/unit/conftest.py` as shared fixtures.
+
+- **Fix wrong mock spec and remove spurious `import requests` from all test files**
+  All test files use `MagicMock(spec=requests.Response)` but `client._request()` returns
+  a `PiholeResponse`, not a `requests.Response`. Production code already uses
+  `ansible.module_utils.urls.open_url` exclusively — `requests` is not a dependency of
+  this collection at all. The fix is test-only: replace `spec=requests.Response` with
+  `spec=PiholeResponse` (importing it from `api_client`), and drop `import requests`.
+
+- **Replace manual `%20` URL encoding in `dns.py` and `dhcp.py`**
+  `dns.py:110,141` and `dhcp.py:113,148` build URLs with a raw `f"{ip}%20{name}"`
+  string. Every other module uses `urllib.parse.quote()`. Unify to the same approach.
+
+- **Simplify `group_names_to_ids()` deduplication (groups.py:332–338)**
+  The 6-line set+list loop is the verbose form of `list(dict.fromkeys(group_ids))`.
+
+- **Fix `delete_group()` exception re-raise losing traceback (groups.py:223–224)**
+  `except PiholeNotFoundError: raise PiholeNotFoundError(...)` creates a new exception,
+  dropping the original chain. Use bare `raise` or `raise ... from exc`.
+
+- **Remove silent fallback API call in `update_client()` (client.py:108–112)**
+  When `group_ids` is `None`, `update_client()` silently issues an extra `GET` to fetch
+  the current client. The comment acknowledges it "should not happen." Side-effects
+  should be explicit, not hidden fallback behavior.
+
+- **Clarify `adlist.py` type parameter (adlist.py:121,131)**
+  `add_adlist()` sends `"type"` in both the JSON body and as a `?type=` query parameter.
+  GET/DELETE use only the query param. Determine which the API actually requires and
+  remove the redundant one.
+
+## Minor
+
+- **Remove `str(e)` wrapping in f-strings — 89 occurrences across 20 files**
+  `f"...: {str(e)}"` should be `f"...: {e}"`. F-strings call `__str__` implicitly.
+
+- **Replace `typing.Dict/List/Optional` imports with builtins**
+  All `module_utils/` files already have `from __future__ import annotations`, making
+  `dict[str, Any]`, `list[str]`, and `X | None` valid. The `typing` generics are
+  holdovers and can be dropped.
+
+- **Remove trailing bare `#` comments in module `main()` functions**
+  Lines like `api_client = PiholeApiClient(pihole_url, sid)  #` appear in several
+  modules (`dns_record.py`, `group.py`, etc.). Leftover from removed inline notes.
+
+- **Add missing docstring Args/Returns/Raises sections to `client.py`**
+  `client.py` functions have one-liner docstrings only. Every other `module_utils/`
+  file uses full structured docstrings.
+
+- **Add `from __future__ import annotations` to `modules/*.py`**
+  All `module_utils/` files have it; none of the `modules/` files do. Minor consistency
+  gap.

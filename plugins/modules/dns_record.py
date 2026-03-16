@@ -119,8 +119,6 @@ result:
   returned: when state is present and a record is added and successful
 """
 
-import ipaddress
-
 from ansible.module_utils.basic import AnsibleModule
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
     PiholeApiClient,
@@ -130,6 +128,8 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.dns import (
     check_static_dns_record_exists,
     add_static_dns_record,
     delete_static_dns_record,
+    parse_dns_records,
+    find_conflicting_dns_records,
 )
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeAuthError,
@@ -169,18 +169,12 @@ def main():
 
     try:
         api_client = PiholeApiClient(pihole_url, sid)
-        existing_raw_records = get_static_dns_records(api_client)  #
-
-        # Parse records for easier processing: list of (ip, name) tuples
-        parsed_existing_records = []
-        for rec_str in existing_raw_records:
-            parts = rec_str.split(None, 1)  # Split on whitespace, max 1 split
-            if len(parts) == 2:
-                parsed_existing_records.append((parts[0], parts[1]))
+        existing_raw_records = get_static_dns_records(api_client)
+        parsed_existing_records = parse_dns_records(existing_raw_records)
 
         exact_match_exists = check_static_dns_record_exists(
             api_client, ip_param, name_param
-        )  #
+        )
 
         if state == "present":
             if ip_param.lower() == "all" or name_param.lower() == "all":
@@ -192,29 +186,9 @@ def main():
             made_changes_during_conflict_resolution = False
 
             if unique_flag:
-                for rec_ip, rec_name in parsed_existing_records:
-                    is_current_record = rec_ip == ip_param and rec_name == name_param
-                    if is_current_record:
-                        continue
-
-                    # Same IP maps to a different name: always a conflict
-                    if rec_ip == ip_param:
-                        conflicts_to_remove.append((rec_ip, rec_name))
-                    # Same name maps to a different IP: only a conflict within the same
-                    # address family — IPv4 A records and IPv6 AAAA records for the same
-                    # hostname legitimately coexist and must not be treated as conflicts.
-                    elif rec_name == name_param:
-                        try:
-                            same_family = (
-                                ipaddress.ip_address(rec_ip).version
-                                == ipaddress.ip_address(ip_param).version
-                            )
-                        except ValueError:
-                            same_family = (
-                                True  # conservative: treat as conflict if unparseable
-                            )
-                        if same_family:
-                            conflicts_to_remove.append((rec_ip, rec_name))
+                conflicts_to_remove = find_conflicting_dns_records(
+                    parsed_existing_records, ip_param, name_param
+                )
 
                 if conflicts_to_remove:
                     if module.check_mode:

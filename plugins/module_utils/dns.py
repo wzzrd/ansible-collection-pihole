@@ -12,7 +12,8 @@ in Pi-hole, including creating, checking, and deleting DNS entries.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List
+import ipaddress
+from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -148,3 +149,62 @@ def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> Non
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to delete DNS record for {name} ({ip}): {str(e)}")
+
+
+def parse_dns_records(raw_records: List[str]) -> List[Tuple[str, str]]:
+    """
+    Parse raw DNS record strings into (ip, name) tuples.
+
+    Args:
+        raw_records: List of strings in "ip name" format as returned by Pi-hole
+
+    Returns:
+        List of (ip, name) tuples for records that have both fields
+    """
+    result = []
+    for rec_str in raw_records:
+        parts = rec_str.split(None, 1)
+        if len(parts) == 2:
+            result.append((parts[0], parts[1]))
+    return result
+
+
+def find_conflicting_dns_records(
+    parsed_records: List[Tuple[str, str]], ip: str, name: str
+) -> List[Tuple[str, str]]:
+    """
+    Find existing DNS records that conflict with adding the given ip/name pair.
+
+    Two conflict rules apply:
+    - Same IP mapped to a different name is always a conflict.
+    - Same name mapped to a different IP is a conflict only within the same address
+      family: an A record and an AAAA record for the same hostname legitimately
+      coexist and are not treated as conflicts.
+
+    Args:
+        parsed_records: Existing records as (ip, name) tuples
+        ip: IP address of the record to be added
+        name: Hostname of the record to be added
+
+    Returns:
+        List of (ip, name) tuples that must be removed to satisfy uniqueness
+    """
+    conflicts = []
+    for rec_ip, rec_name in parsed_records:
+        if rec_ip == ip and rec_name == name:
+            continue  # exact match, not a conflict
+
+        if rec_ip == ip:
+            conflicts.append((rec_ip, rec_name))
+        elif rec_name == name:
+            try:
+                same_family = (
+                    ipaddress.ip_address(rec_ip).version
+                    == ipaddress.ip_address(ip).version
+                )
+            except ValueError:
+                same_family = True  # conservative: treat as conflict if unparseable
+            if same_family:
+                conflicts.append((rec_ip, rec_name))
+
+    return conflicts
