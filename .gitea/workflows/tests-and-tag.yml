@@ -79,6 +79,9 @@ jobs:
         scenario:
           - dns_dhcp
           - blocklists
+          - batch_delete_groups
+          - blocking_and_actions
+          - state_absent
     steps:
       - name: Checkout
         uses: actions/checkout@v4

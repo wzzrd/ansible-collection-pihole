@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.5 (2026-03-16)
+
+### CI
+- Add `batch_delete_groups`, `blocking_and_actions`, and `state_absent` Molecule scenarios to the CI workflow matrix
+
 ## v1.0.4 (2026-03-16)
 
 ### Bug Fixes
