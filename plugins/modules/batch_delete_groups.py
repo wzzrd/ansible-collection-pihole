@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: batch_delete_groups
@@ -110,7 +111,7 @@ def main():
         client = PiholeApiClient(pihole_url, sid)
 
         # Get all available groups to check which ones actually exist
-        all_groups_map = get_groups(client)  #
+        all_groups_map = get_groups(client)
         existing_group_names = list(all_groups_map.keys())
 
         # Filter to only delete groups that actually exist
@@ -135,7 +136,7 @@ def main():
                 deleted_count=len(groups_that_exist_and_will_be_deleted),
             )
 
-        result = batch_delete_groups(client, groups_that_exist_and_will_be_deleted)  #
+        result = batch_delete_groups(client, groups_that_exist_and_will_be_deleted)
 
         # The batch_delete_groups utility should return a dict that might include success/message
         # or raise an error. The module's return should reflect this.
@@ -151,13 +152,13 @@ def main():
         )
 
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

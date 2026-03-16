@@ -13,7 +13,7 @@ Clients can be identified by IP address, MAC address, hostname, or interface.
 from __future__ import annotations
 
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -26,10 +26,21 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeNotFoundError,
 )
 
-
-def get_client(client: PiholeApiClient, client_id: str) -> Optional[Dict[str, Any]]:
+def get_client(client: PiholeApiClient, client_id: str) -> dict[str, Any] | None:
     """
     Get details for a specific client.
+
+    Args:
+        client: Initialized Pi-hole API client
+        client_id: IP address, MAC address, hostname, or interface of the client
+
+    Returns:
+        Dict with client details if found, None otherwise
+
+    Raises:
+        PiholeAuthError: If authentication fails
+        PiholeConnectionError: If connection fails
+        PiholeApiError: For other API errors
     """
     encoded_client = urllib.parse.quote(client_id)
     try:
@@ -44,19 +55,32 @@ def get_client(client: PiholeApiClient, client_id: str) -> Optional[Dict[str, An
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve client '{client_id}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve client '{client_id}': {e}")
 
 def add_client(
     client: PiholeApiClient,
     client_id: str,
-    comment: Optional[str] = None,  # This is comment_param from the module
-    group_ids: Optional[List[int]] = None,
-) -> Dict[str, Any]:
+    comment: str | None = None,  # This is comment_param from the module
+    group_ids: list[int] | None = None,
+) -> dict[str, Any]:
     """
     Add a new client configuration.
+
+    Args:
+        client: Initialized Pi-hole API client
+        client_id: IP address, MAC address, hostname, or interface of the client
+        comment: Optional comment for the client
+        group_ids: List of group IDs to associate (defaults to [0])
+
+    Returns:
+        API response containing the created client
+
+    Raises:
+        PiholeAuthError: If authentication fails
+        PiholeConnectionError: If connection fails
+        PiholeApiError: For other API errors
     """
-    data: Dict[str, Any] = {"client": client_id}
+    data: dict[str, Any] = {"client": client_id}
 
     # Only include 'comment' in the payload if it's explicitly provided (not None)
     if comment is not None:
@@ -76,22 +100,35 @@ def add_client(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to add client '{client_id}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to add client '{client_id}': {e}")
 
 def update_client(
     client: PiholeApiClient,
     client_id: str,
-    comment: Optional[str] = None,  # This is comment_param from the module
-    group_ids: Optional[List[int]] = None,
-) -> Dict[str, Any]:
+    comment: str | None = None,  # This is comment_param from the module
+    group_ids: list[int] | None = None,
+) -> dict[str, Any]:
     """
     Update an existing client configuration.
+
+    Args:
+        client: Initialized Pi-hole API client
+        client_id: IP address, MAC address, hostname, or interface of the client
+        comment: New comment (None omits the field, preserving the existing value)
+        group_ids: New list of group IDs (None triggers a fallback GET to preserve existing)
+
+    Returns:
+        API response containing the updated client
+
+    Raises:
+        PiholeAuthError: If authentication fails
+        PiholeConnectionError: If connection fails
+        PiholeApiError: For other API errors
     """
     # URL encode the client identifier
     encoded_client = urllib.parse.quote(client_id)
 
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
 
     # Only include 'comment' in the PUT payload if it's explicitly provided (not None)
     # If comment_param was None in the module, 'comment' here will be None,
@@ -120,12 +157,23 @@ def update_client(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to update client '{client_id}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to update client '{client_id}': {e}")
 
 def delete_client(client: PiholeApiClient, client_id: str) -> bool:
     """
     Delete a client configuration.
+
+    Args:
+        client: Initialized Pi-hole API client
+        client_id: IP address, MAC address, hostname, or interface of the client
+
+    Returns:
+        True if deleted, False if not found
+
+    Raises:
+        PiholeAuthError: If authentication fails
+        PiholeConnectionError: If connection fails
+        PiholeApiError: For other API errors
     """
     encoded_client = urllib.parse.quote(client_id)
     try:
@@ -139,4 +187,4 @@ def delete_client(client: PiholeApiClient, client_id: str) -> bool:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to delete client '{client_id}': {str(e)}")
+        raise PiholeApiError(f"Failed to delete client '{client_id}': {e}")

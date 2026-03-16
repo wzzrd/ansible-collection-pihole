@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import ipaddress
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Dict, List, Tuple
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -26,8 +26,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
-
-def get_static_dns_records(client: PiholeApiClient) -> List[str]:
+def get_static_dns_records(client: PiholeApiClient) -> list[str]:
     """
     Get all static DNS records from Pi-hole.
 
@@ -57,8 +56,7 @@ def get_static_dns_records(client: PiholeApiClient) -> List[str]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve static DNS records: {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve static DNS records: {e}")
 
 def check_static_dns_record_exists(client: PiholeApiClient, ip: str, name: str) -> bool:
     """
@@ -83,10 +81,9 @@ def check_static_dns_record_exists(client: PiholeApiClient, ip: str, name: str) 
     record = f"{ip} {name}"
     return record in records
 
-
 def add_static_dns_record(
     client: PiholeApiClient, ip: str, name: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Add a new static DNS record (A record).
 
@@ -118,8 +115,7 @@ def add_static_dns_record(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to add DNS record for {name} ({ip}): {str(e)}")
-
+        raise PiholeApiError(f"Failed to add DNS record for {name} ({ip}): {e}")
 
 def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> None:
     """
@@ -147,10 +143,9 @@ def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> Non
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to delete DNS record for {name} ({ip}): {str(e)}")
+        raise PiholeApiError(f"Failed to delete DNS record for {name} ({ip}): {e}")
 
-
-def parse_dns_records(raw_records: List[str]) -> List[Tuple[str, str]]:
+def parse_dns_records(raw_records: list[str]) -> list[tuple[str, str]]:
     """
     Parse raw DNS record strings into (ip, name) tuples.
 
@@ -167,10 +162,9 @@ def parse_dns_records(raw_records: List[str]) -> List[Tuple[str, str]]:
             result.append((parts[0], parts[1]))
     return result
 
-
 def find_conflicting_dns_records(
-    parsed_records: List[Tuple[str, str]], ip: str, name: str
-) -> List[Tuple[str, str]]:
+    parsed_records: list[tuple[str, str]], ip: str, name: str
+) -> list[tuple[str, str]]:
     """
     Find existing DNS records that conflict with adding the given ip/name pair.
 

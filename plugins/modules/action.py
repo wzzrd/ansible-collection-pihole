@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: action
@@ -135,7 +136,7 @@ def main():
             )
 
         # Perform the action
-        result = perform_action(client, action_to_perform)  #
+        result = perform_action(client, action_to_perform)
 
         module.exit_json(
             changed=True,
@@ -146,13 +147,13 @@ def main():
     except PiholeValidationError as e:
         module.fail_json(msg=str(e))
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

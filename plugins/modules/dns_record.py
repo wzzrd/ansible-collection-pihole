@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: dns_record
@@ -201,13 +202,13 @@ def main():
                         )
 
                     for conf_ip, conf_name in conflicts_to_remove:
-                        delete_static_dns_record(api_client, conf_ip, conf_name)  #
+                        delete_static_dns_record(api_client, conf_ip, conf_name)
                         made_changes_during_conflict_resolution = True
 
                     # Re-check for exact match after conflict resolution
                     exact_match_exists = check_static_dns_record_exists(
                         api_client, ip_param, name_param
-                    )  #
+                    )
 
             if exact_match_exists and not made_changes_during_conflict_resolution:
                 module.exit_json(
@@ -222,7 +223,7 @@ def main():
                         msg=f"Would add DNS record {ip_param} -> {name_param}.",
                     )
 
-                result = add_static_dns_record(api_client, ip_param, name_param)  #
+                result = add_static_dns_record(api_client, ip_param, name_param)
                 module.exit_json(
                     changed=True,
                     result=result,
@@ -258,7 +259,7 @@ def main():
                 module.exit_json(changed=True, msg=msg)
 
             for rec_ip_del, rec_name_del in records_to_delete:
-                delete_static_dns_record(api_client, rec_ip_del, rec_name_del)  #
+                delete_static_dns_record(api_client, rec_ip_del, rec_name_del)
 
             module.exit_json(
                 changed=True, msg=f"Removed {len(records_to_delete)} DNS record(s)."
@@ -271,13 +272,13 @@ def main():
     ) as e:  # Should generally be handled by logic, but as a fallback
         module.fail_json(msg=str(e))
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

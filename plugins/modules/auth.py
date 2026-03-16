@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: auth
@@ -105,7 +106,7 @@ def main() -> None:
 
     try:
         # Use the PiholeApiClient class method to authenticate
-        sid = PiholeApiClient.authenticate(pihole_url, password)  #
+        sid = PiholeApiClient.authenticate(pihole_url, password)
         # changed=False because this module retrieves data, it doesn't change Pi-hole state.
         # The previous version had changed=True for workflow compatibility, which is unusual for a get-like operation.
         # Let's stick to changed=False as per typical Ansible module behavior for read-only ops.
@@ -114,13 +115,13 @@ def main() -> None:
         module.exit_json(changed=False, sid=sid)
 
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication failed: {str(e)}")
+        module.fail_json(msg=f"Authentication failed: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

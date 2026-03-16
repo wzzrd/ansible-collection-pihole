@@ -12,7 +12,7 @@ in Pi-hole, including enabling, disabling, and checking the current state.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -24,8 +24,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
-
-def get_blocking_status(client: PiholeApiClient) -> Dict[str, Any]:
+def get_blocking_status(client: PiholeApiClient) -> dict[str, Any]:
     """
     Get the current blocking status from Pi-hole.
 
@@ -49,12 +48,11 @@ def get_blocking_status(client: PiholeApiClient) -> Dict[str, Any]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve blocking status: {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve blocking status: {e}")
 
 def set_blocking_status(
-    client: PiholeApiClient, enabled: bool, timer: Optional[int] = None
-) -> Dict[str, Any]:
+    client: PiholeApiClient, enabled: bool, timer: int | None = None
+) -> dict[str, Any]:
     """
     Set the DNS blocking status in Pi-hole.
 
@@ -73,7 +71,7 @@ def set_blocking_status(
         PiholeConnectionError: If connection to Pi-hole fails.
         PiholeApiError: For other API-related errors.
     """
-    data: Dict[str, Any] = {"blocking": enabled}
+    data: dict[str, Any] = {"blocking": enabled}
 
     if timer is not None and timer > 0:
         data["timer"] = timer
@@ -89,4 +87,4 @@ def set_blocking_status(
         msg = f"Failed to {action} blocking"
         if timer:
             msg += f" for {timer} seconds"
-        raise PiholeApiError(f"{msg}: {str(e)}")
+        raise PiholeApiError(f"{msg}: {e}")

@@ -18,7 +18,7 @@ from __future__ import annotations
 import json
 import urllib.error
 import urllib.parse
-from typing import Any, Dict, Optional
+from typing import Any
 
 from ansible.module_utils.urls import open_url
 
@@ -28,7 +28,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeConnectionError,
     PiholeNotFoundError,
 )
-
 
 class PiholeResponse:
     """Minimal HTTP response wrapper matching the requests.Response interface."""
@@ -55,7 +54,6 @@ class PiholeResponse:
                 response_text=self.text,
             )
 
-
 class PiholeApiClient:
     """
     Client for base Pi-hole API operations.
@@ -75,9 +73,9 @@ class PiholeApiClient:
         self,
         method: str,
         endpoint: str,
-        json_data: Optional[Dict[str, Any]] = None,
-        params: Optional[Dict[str, Any]] = None,
-        timeout: Optional[int] = None,
+        json_data: dict[str, Any] | None = None,
+        params: dict[str, Any] | None = None,
+        timeout: int | None = None,
     ) -> PiholeResponse:
         """
         Make a request to the Pi-hole API with appropriate error handling.
@@ -191,7 +189,7 @@ class PiholeApiClient:
                 validate_certs=False,
                 timeout=timeout,
             )
-            data: Dict[str, Any] = json.loads(resp.read())
+            data: dict[str, Any] = json.loads(resp.read())
 
             session_data = data.get("session", {})
             sid = session_data.get("sid")

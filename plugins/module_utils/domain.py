@@ -13,7 +13,7 @@ and blacklist, including exact domains and regex patterns.
 from __future__ import annotations
 
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -27,13 +27,12 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
-
 def get_domain(
     client: PiholeApiClient,
     domain: str,
-    domain_type: Optional[str] = None,
-    domain_kind: Optional[str] = None,
-) -> Tuple[Optional[Dict[str, Any]], Optional[Tuple[str, str]]]:
+    domain_type: str | None = None,
+    domain_kind: str | None = None,
+) -> tuple[dict[str, Any] | None, tuple[str, str] | None]:
     """
     Get details for a domain from whitelist or blacklist.
 
@@ -93,18 +92,17 @@ def get_domain(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve domain '{domain}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve domain '{domain}': {e}")
 
 def add_domain(
     client: PiholeApiClient,
     domain: str,
     domain_type: str,
     domain_kind: str,
-    comment: Optional[str] = None,
-    group_ids: Optional[List[int]] = None,
+    comment: str | None = None,
+    group_ids: list[int] | None = None,
     enabled: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Add a domain to the whitelist or blacklist.
 
@@ -134,7 +132,7 @@ def add_domain(
         ...     comment="Known ad server"
         ... )
     """
-    data: Dict[str, Any] = {"domain": domain, "enabled": enabled}
+    data: dict[str, Any] = {"domain": domain, "enabled": enabled}
 
     if comment is not None:
         data["comment"] = comment
@@ -153,9 +151,8 @@ def add_domain(
         raise
     except Exception as e:
         raise PiholeApiError(
-            f"Failed to add domain '{domain}' as {domain_type}/{domain_kind}: {str(e)}"
+            f"Failed to add domain '{domain}' as {domain_type}/{domain_kind}: {e}"
         )
-
 
 def update_domain(
     client: PiholeApiClient,
@@ -164,10 +161,10 @@ def update_domain(
     current_kind: str,
     target_type: str,
     target_kind: str,
-    comment: Optional[str] = None,
-    group_ids: Optional[List[int]] = None,
-    enabled: Optional[bool] = None,
-) -> Dict[str, Any]:
+    comment: str | None = None,
+    group_ids: list[int] | None = None,
+    enabled: bool | None = None,
+) -> dict[str, Any]:
     """
     Update a domain in the whitelist or blacklist.
 
@@ -219,7 +216,7 @@ def update_domain(
     endpoint = f"api/domains/{target_type}/{target_kind}/{encoded_domain}"
 
     # Build the data for the PUT request
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
 
     # Include the CURRENT type/kind when moving between lists
     if current_type != target_type or current_kind != target_kind:
@@ -245,8 +242,7 @@ def update_domain(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to update domain '{domain}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to update domain '{domain}': {e}")
 
 def delete_domain(
     client: PiholeApiClient, domain: str, domain_type: str, domain_kind: str
@@ -292,5 +288,5 @@ def delete_domain(
         raise
     except Exception as e:
         raise PiholeApiError(
-            f"Failed to delete domain '{domain}' from {domain_type}/{domain_kind}: {str(e)}"
+            f"Failed to delete domain '{domain}' from {domain_type}/{domain_kind}: {e}"
         )

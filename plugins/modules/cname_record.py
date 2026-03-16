@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: cname_record
@@ -156,7 +157,7 @@ def main():
 
     try:
         api_client = PiholeApiClient(pihole_url, sid)
-        existing_raw_records = get_cname_records(api_client)  #
+        existing_raw_records = get_cname_records(api_client)
 
         # Parse existing records into a more usable format, e.g., list of tuples
         # Pi-hole API returns them as "cname,target" strings
@@ -168,7 +169,7 @@ def main():
 
         exact_match_exists = check_cname_record_exists(
             api_client, cname_alias, target_name
-        )  #
+        )
 
         if state == "present":
             conflicts_to_remove = []
@@ -202,7 +203,7 @@ def main():
                         )
 
                     for conf_c, conf_t in conflicts_to_remove:
-                        delete_cname_record(api_client, conf_c, conf_t)  #
+                        delete_cname_record(api_client, conf_c, conf_t)
                         made_changes_during_conflict_resolution = True
 
                     # After removing conflicts, the target record might now effectively "not exist"
@@ -210,7 +211,7 @@ def main():
                     # Re-check for an exact match if we are trying to create cname_alias -> target_name
                     exact_match_exists = check_cname_record_exists(
                         api_client, cname_alias, target_name
-                    )  #
+                    )
 
             if exact_match_exists and not made_changes_during_conflict_resolution:
                 module.exit_json(
@@ -226,7 +227,7 @@ def main():
                         msg=f"Would add CNAME record {cname_alias} -> {target_name}.",
                     )
 
-                result = add_cname_record(api_client, cname_alias, target_name)  #
+                result = add_cname_record(api_client, cname_alias, target_name)
                 module.exit_json(
                     changed=True,
                     result=result,
@@ -264,7 +265,7 @@ def main():
                 module.exit_json(changed=True, msg=msg)
 
             for rec_c, rec_t in records_to_delete:
-                delete_cname_record(api_client, rec_c, rec_t)  #
+                delete_cname_record(api_client, rec_c, rec_t)
 
             module.exit_json(
                 changed=True, msg=f"Removed {len(records_to_delete)} CNAME record(s)."
@@ -277,13 +278,13 @@ def main():
     ) as e:  # Should be handled by check_exists, but as safeguard
         module.fail_json(msg=str(e))
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

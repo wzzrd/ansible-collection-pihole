@@ -12,7 +12,7 @@ including creating, checking, and deleting static DHCP leases.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -24,8 +24,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
-
-def get_dhcp_reservations(client: PiholeApiClient) -> List[str]:
+def get_dhcp_reservations(client: PiholeApiClient) -> list[str]:
     """
     Get all DHCP reservations from Pi-hole.
 
@@ -55,8 +54,7 @@ def get_dhcp_reservations(client: PiholeApiClient) -> List[str]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve DHCP reservations: {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve DHCP reservations: {e}")
 
 def check_dhcp_reservation_exists(
     client: PiholeApiClient, hw: str, ip: str, name: str
@@ -84,10 +82,9 @@ def check_dhcp_reservation_exists(
     reservation = f"{hw},{ip},{name}".lower()
     return reservation in [r.lower() for r in reservations]
 
-
 def add_dhcp_reservation(
     client: PiholeApiClient, hw: str, ip: str, name: str
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Add a new DHCP reservation.
 
@@ -120,8 +117,7 @@ def add_dhcp_reservation(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to add DHCP reservation for {hw}: {str(e)}")
-
+        raise PiholeApiError(f"Failed to add DHCP reservation for {hw}: {e}")
 
 def delete_dhcp_reservation(
     client: PiholeApiClient, hw: str, ip: str, name: str
@@ -154,4 +150,4 @@ def delete_dhcp_reservation(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to delete DHCP reservation for {hw}: {str(e)}")
+        raise PiholeApiError(f"Failed to delete DHCP reservation for {hw}: {e}")

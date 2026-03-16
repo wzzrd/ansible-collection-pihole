@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: group
@@ -185,7 +186,7 @@ def main():
 
     try:
         api_client = PiholeApiClient(pihole_url, sid)
-        existing_group_data = get_group(api_client, current_name)  #
+        existing_group_data = get_group(api_client, current_name)
         exists = existing_group_data is not None
 
         if state == "present":
@@ -227,7 +228,7 @@ def main():
                         new_name_param,
                         comment_param,
                         enabled_param,
-                    )  #
+                    )
                     updated_group_details = (
                         result.get("groups", [{}])[0] if result.get("groups") else {}
                     )
@@ -275,7 +276,7 @@ def main():
                     name_for_creation,
                     comment_for_creation,
                     enabled_for_creation,
-                )  #
+                )
                 created_group_details = (
                     result.get("groups", [{}])[0] if result.get("groups") else {}
                 )
@@ -293,7 +294,7 @@ def main():
                         changed=True, msg=f"Would delete group '{current_name}'"
                     )
 
-                result = delete_group(api_client, current_name)  #
+                result = delete_group(api_client, current_name)
                 # delete_group utility returns a dict like {"success": True, "message": "..."}
                 module.exit_json(
                     changed=True,
@@ -310,13 +311,13 @@ def main():
     except PiholeNotFoundError as e:  # Should be caught by get_group returning None
         module.fail_json(msg=str(e))
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

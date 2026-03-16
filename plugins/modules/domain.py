@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: domain
@@ -238,11 +239,11 @@ def main():
 
     try:
         api_client = PiholeApiClient(pihole_url, sid)
-        param_group_ids = group_names_to_ids(api_client, param_group_names)  #
+        param_group_ids = group_names_to_ids(api_client, param_group_names)
 
         # Try to find the domain in any list to determine its current location if it exists.
         # The get_domain utility can search without type/kind to find it anywhere.
-        existing_domain_data, current_location = get_domain(api_client, domain_name)  #
+        existing_domain_data, current_location = get_domain(api_client, domain_name)
         exists_somewhere = existing_domain_data is not None
         current_type, current_kind = (
             current_location if current_location else (None, None)
@@ -289,7 +290,7 @@ def main():
                         comment=param_comment,
                         group_ids=param_group_ids,
                         enabled=param_enabled,
-                    )  #
+                    )
 
                     updated_domain_details = (
                         result.get("domains", [{}])[0] if result.get("domains") else {}
@@ -325,7 +326,7 @@ def main():
                     param_comment,
                     param_group_ids,
                     param_enabled,
-                )  #
+                )
                 created_domain_details = (
                     result.get("domains", [{}])[0] if result.get("domains") else {}
                 )
@@ -381,15 +382,15 @@ def main():
     except (
         PiholeNotFoundError
     ) as e:  # Can be raised by get_domain if specific type/kind not found
-        module.fail_json(msg=f"Error related to domain not found: {str(e)}")
+        module.fail_json(msg=f"Error related to domain not found: {e}")
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

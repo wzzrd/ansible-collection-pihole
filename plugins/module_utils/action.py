@@ -12,7 +12,7 @@ in Pi-hole, such as updating gravity or restarting services.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -25,8 +25,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
-
-def perform_action(client: PiholeApiClient, action: str) -> Dict[str, Any]:
+def perform_action(client: PiholeApiClient, action: str) -> dict[str, Any]:
     """
     Perform a system action in Pi-hole.
 
@@ -82,4 +81,4 @@ def perform_action(client: PiholeApiClient, action: str) -> Dict[str, Any]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to perform action '{action}': {str(e)}")
+        raise PiholeApiError(f"Failed to perform action '{action}': {e}")

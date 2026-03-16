@@ -13,7 +13,7 @@ in Pi-hole, including adding, updating, and removing lists.
 from __future__ import annotations
 
 import urllib.parse
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -27,10 +27,9 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
-
 def get_adlist(
     client: PiholeApiClient, address: str, list_type: str = "block"
-) -> Optional[Dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Get details for a specific adlist.
 
@@ -80,17 +79,16 @@ def get_adlist(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve adlist '{address}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve adlist '{address}': {e}")
 
 def add_adlist(
     client: PiholeApiClient,
     address: str,
     list_type: str = "block",
-    comment: Optional[str] = None,
-    group_ids: Optional[List[int]] = None,
+    comment: str | None = None,
+    group_ids: list[int] | None = None,
     enabled: bool = True,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Add a new adlist.
 
@@ -118,7 +116,7 @@ def add_adlist(
         ...     group_ids=[0, 1]
         ... )
     """
-    data: Dict[str, Any] = {"address": address, "enabled": enabled}
+    data: dict[str, Any] = {"address": address, "enabled": enabled}
 
     if comment is not None:
         data["comment"] = comment
@@ -137,18 +135,17 @@ def add_adlist(
         raise
     except Exception as e:
         raise PiholeApiError(
-            f"Failed to add adlist '{address}' as {list_type}: {str(e)}"
+            f"Failed to add adlist '{address}' as {list_type}: {e}"
         )
-
 
 def update_adlist(
     client: PiholeApiClient,
     address: str,
-    list_type: Optional[str] = None,
-    comment: Optional[str] = None,
-    group_ids: Optional[List[int]] = None,
-    enabled: Optional[bool] = None,
-) -> Dict[str, Any]:
+    list_type: str | None = None,
+    comment: str | None = None,
+    group_ids: list[int] | None = None,
+    enabled: bool | None = None,
+) -> dict[str, Any]:
     """
     Update an existing adlist.
 
@@ -188,7 +185,7 @@ def update_adlist(
     endpoint = f"api/lists/{encoded_address}{query_type}"
 
     # Build the data preserving existing values
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
 
     if list_type is not None:
         data["type"] = list_type
@@ -211,12 +208,11 @@ def update_adlist(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to update adlist '{address}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to update adlist '{address}': {e}")
 
 def delete_adlist(
     client: PiholeApiClient, address: str, list_type: str = "block"
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Delete an adlist.
 
@@ -272,4 +268,4 @@ def delete_adlist(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to delete adlist '{address}': {str(e)}")
+        raise PiholeApiError(f"Failed to delete adlist '{address}': {e}")

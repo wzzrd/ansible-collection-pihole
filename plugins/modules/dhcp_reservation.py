@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: dhcp_reservation
@@ -146,7 +147,7 @@ def main():
         # Check if the reservation exists
         exists = check_dhcp_reservation_exists(
             client, hw_address, ip_address, hostname
-        )  #
+        )
 
         if state == "present":
             if exists:
@@ -163,7 +164,7 @@ def main():
 
                 result = add_dhcp_reservation(
                     client, hw_address, ip_address, hostname
-                )  #
+                )
                 module.exit_json(
                     changed=True,
                     result=result,
@@ -183,20 +184,20 @@ def main():
                         msg=f"Would delete DHCP reservation for MAC {hw_address} ({ip_address} -> {hostname}).",
                     )
 
-                delete_dhcp_reservation(client, hw_address, ip_address, hostname)  #
+                delete_dhcp_reservation(client, hw_address, ip_address, hostname)
                 module.exit_json(
                     changed=True,
                     msg=f"DHCP reservation for MAC {hw_address} ({ip_address} -> {hostname}) deleted.",
                 )
 
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

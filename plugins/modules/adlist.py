@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: adlist
@@ -209,13 +210,13 @@ def main():
 
         # Convert group names to IDs
         try:
-            group_ids = group_names_to_ids(client, group_names)  #
+            group_ids = group_names_to_ids(client, group_names)
         except PiholeValidationError as e:
             module.fail_json(msg=str(e))
             return  # Ensure exit after fail_json
 
         # Check if the adlist exists
-        existing_adlist = get_adlist(client, address, list_type)  #
+        existing_adlist = get_adlist(client, address, list_type)
         exists = existing_adlist is not None
 
         if state == "present":
@@ -265,7 +266,7 @@ def main():
                         comment=updated_comment,
                         group_ids=group_ids,
                         enabled=updated_enabled,
-                    )  #
+                    )
 
                     updated_adlist_details = None
                     if result and "lists" in result and result["lists"]:
@@ -291,7 +292,7 @@ def main():
 
                 result = add_adlist(
                     client, address, list_type, comment_param, group_ids, enabled_param
-                )  #
+                )
                 created_adlist_details = None
                 if result and "lists" in result and result["lists"]:
                     created_adlist_details = result["lists"][0]
@@ -344,13 +345,13 @@ def main():
     ) as e:  # Should be caught by get_adlist returning None, but as a safeguard
         module.fail_json(msg=str(e))
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

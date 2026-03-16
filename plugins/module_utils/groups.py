@@ -12,7 +12,7 @@ including creating, updating, deleting, and querying groups.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Set
+from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
     from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
@@ -26,8 +26,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
-
-def get_groups(client: PiholeApiClient) -> Dict[str, int]:
+def get_groups(client: PiholeApiClient) -> dict[str, int]:
     """
     Retrieve all groups and map names to IDs.
 
@@ -57,10 +56,9 @@ def get_groups(client: PiholeApiClient) -> Dict[str, int]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve groups: {str(e)}")
+        raise PiholeApiError(f"Failed to retrieve groups: {e}")
 
-
-def get_group(client: PiholeApiClient, name: str) -> Optional[Dict[str, Any]]:
+def get_group(client: PiholeApiClient, name: str) -> dict[str, Any] | None:
     """
     Retrieve a specific group by name.
 
@@ -92,12 +90,11 @@ def get_group(client: PiholeApiClient, name: str) -> Optional[Dict[str, Any]]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to retrieve group '{name}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to retrieve group '{name}': {e}")
 
 def add_group(
     client: PiholeApiClient, name: str, comment: str = "", enabled: bool = True
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Add a new group.
 
@@ -125,16 +122,15 @@ def add_group(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to add group '{name}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to add group '{name}': {e}")
 
 def update_group(
     client: PiholeApiClient,
     name: str,
-    new_name: Optional[str] = None,
-    comment: Optional[str] = None,
-    enabled: Optional[bool] = None,
-) -> Dict[str, Any]:
+    new_name: str | None = None,
+    comment: str | None = None,
+    enabled: bool | None = None,
+) -> dict[str, Any]:
     """
     Update an existing group.
 
@@ -160,7 +156,7 @@ def update_group(
         raise PiholeValidationError(f"Group '{name}' does not exist")
 
     # Prepare update data
-    data: Dict[str, Any] = {}
+    data: dict[str, Any] = {}
 
     if new_name is not None:
         data["name"] = new_name
@@ -181,10 +177,9 @@ def update_group(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to update group '{name}': {str(e)}")
+        raise PiholeApiError(f"Failed to update group '{name}': {e}")
 
-
-def delete_group(client: PiholeApiClient, name: str) -> Dict[str, Any]:
+def delete_group(client: PiholeApiClient, name: str) -> dict[str, Any]:
     """
     Delete a group.
 
@@ -225,12 +220,11 @@ def delete_group(client: PiholeApiClient, name: str) -> Dict[str, Any]:
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to delete group '{name}': {str(e)}")
-
+        raise PiholeApiError(f"Failed to delete group '{name}': {e}")
 
 def batch_delete_groups(
-    client: PiholeApiClient, group_names: List[str]
-) -> Dict[str, Any]:
+    client: PiholeApiClient, group_names: list[str]
+) -> dict[str, Any]:
     """
     Delete multiple groups in a single batch operation.
 
@@ -289,10 +283,9 @@ def batch_delete_groups(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(f"Failed to batch delete groups: {str(e)}")
+        raise PiholeApiError(f"Failed to batch delete groups: {e}")
 
-
-def group_names_to_ids(client: PiholeApiClient, group_names: List[str]) -> List[int]:
+def group_names_to_ids(client: PiholeApiClient, group_names: list[str]) -> list[int]:
     """
     Convert group names to their corresponding IDs.
 
@@ -314,8 +307,8 @@ def group_names_to_ids(client: PiholeApiClient, group_names: List[str]) -> List[
 
     group_mapping = get_groups(client)
 
-    group_ids: List[int] = []
-    missing_groups: List[str] = []
+    group_ids: list[int] = []
+    missing_groups: list[str] = []
 
     for name in group_names:
         if name in group_mapping:

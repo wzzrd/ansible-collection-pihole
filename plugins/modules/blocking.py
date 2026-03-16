@@ -4,6 +4,7 @@
 # Copyright: (c) 2026 Maxim Burgerhout <maxim@wzzrd.com>
 # GNU General Public License v3.0+
 
+from __future__ import annotations
 DOCUMENTATION = r"""
 ---
 module: blocking
@@ -147,7 +148,7 @@ def main():
         client = PiholeApiClient(pihole_url, sid)
 
         # Get current blocking status
-        current_status_data = get_blocking_status(client)  #
+        current_status_data = get_blocking_status(client)
 
         # current_status_data might be {"blocking": "enabled", "timer": null} or {"blocking": "disabled", "timer": 300}
         # The API returns "enabled" or "disabled" as strings for "blocking".
@@ -187,7 +188,7 @@ def main():
 
             updated_status_data = set_blocking_status(
                 client, desired_enabled_state, desired_timer_state
-            )  #
+            )
             module.exit_json(
                 changed=True,
                 msg=f"Pi-hole blocking {action_msg_verb}d{action_msg_timer}",
@@ -209,13 +210,13 @@ def main():
             )
 
     except PiholeAuthError as e:
-        module.fail_json(msg=f"Authentication error: {str(e)}")
+        module.fail_json(msg=f"Authentication error: {e}")
     except PiholeConnectionError as e:
-        module.fail_json(msg=f"Connection error: {str(e)}")
+        module.fail_json(msg=f"Connection error: {e}")
     except PiholeApiError as e:
-        module.fail_json(msg=f"API error: {str(e)}")
+        module.fail_json(msg=f"API error: {e}")
     except Exception as e:
-        module.fail_json(msg=f"Unexpected error: {str(e)}")
+        module.fail_json(msg=f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":
