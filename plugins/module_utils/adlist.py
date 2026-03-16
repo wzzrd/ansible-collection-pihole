@@ -118,7 +118,7 @@ def add_adlist(
         ...     group_ids=[0, 1]
         ... )
     """
-    data: Dict[str, Any] = {"address": address, "type": list_type, "enabled": enabled}
+    data: Dict[str, Any] = {"address": address, "enabled": enabled}
 
     if comment is not None:
         data["comment"] = comment

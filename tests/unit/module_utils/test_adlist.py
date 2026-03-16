@@ -107,13 +107,13 @@ class TestAddAdlist:
         endpoint = client._request.call_args.args[1]
         assert "?type=block" in endpoint
 
-    def test_payload_includes_address_type_enabled(self):
+    def test_payload_includes_address_and_enabled(self):
         client = _mock_client(_make_response(201, {}))
         add_adlist(client, BLOCKLIST_URL, list_type="block", enabled=True)
         payload = client._request.call_args.kwargs["json_data"]
         assert payload["address"] == BLOCKLIST_URL
-        assert payload["type"] == "block"
         assert payload["enabled"] is True
+        assert "type" not in payload  # type is in ?type= query param, not the body
 
     def test_comment_included_when_provided(self):
         client = _mock_client(_make_response(201, {}))

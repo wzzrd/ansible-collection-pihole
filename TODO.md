@@ -7,11 +7,6 @@
   the current client. The comment acknowledges it "should not happen." Side-effects
   should be explicit, not hidden fallback behavior.
 
-- **Clarify `adlist.py` type parameter (adlist.py:121,131)**
-  `add_adlist()` sends `"type"` in both the JSON body and as a `?type=` query parameter.
-  GET/DELETE use only the query param. Determine which the API actually requires and
-  remove the redundant one.
-
 ## Minor
 
 - **Remove `str(e)` wrapping in f-strings — 89 occurrences across 20 files**
