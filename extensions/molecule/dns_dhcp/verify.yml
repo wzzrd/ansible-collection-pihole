@@ -1,9 +1,8 @@
 ---
 # Verify playbook for the dns_dhcp scenario.
 #
-# Re-runs every converge task in check_mode and asserts that nothing
-# is reported as changed (idempotency check).  Also verifies the
-# Pi-hole API directly to confirm each record is actually stored.
+# Re-runs every converge task in check_mode and asserts nothing changed
+# (idempotency), then spot-checks the Pi-hole API for expected objects.
 
 - name: Verify DNS/DHCP records – idempotency and presence
   hosts: localhost
@@ -77,6 +76,7 @@
       no_log: "{{ not (molecule_debug | default(false)) }}"
       retries: 5
       delay: 5
+      until: auth_result is not failed
 
     # ------------------------------------------------------------------ #
     # DHCP idempotency                                                     #
@@ -191,10 +191,7 @@
         label: "{{ item.item.cname }}"
 
     # ------------------------------------------------------------------ #
-    # Spot-check via Pi-hole API: confirm exact record counts             #
-    # 6 A records + 3 AAAA records = 9 entries in dns/hosts              #
-    # 4 CNAME records                                                     #
-    # 5 DHCP reservations                                                 #
+    # Spot-check via Pi-hole API                                           #
     # ------------------------------------------------------------------ #
     - name: Retrieve all static DNS records from Pi-hole API
       ansible.builtin.uri:
@@ -203,15 +200,35 @@
         headers:
           sid: "{{ auth_result.sid }}"
         status_code: 200
-      register: _dns_api_response
+      register: _dns_api
 
-    - name: Assert exactly 9 static DNS records are present in Pi-hole
+    - name: Assert each A record is present in the API response
       ansible.builtin.assert:
-        that: (_dns_api_response.json.config.dns.hosts | default([])) | length == 9
+        that: (item.ip ~ ' ' ~ item.name) in (_dns_api.json.config.dns.hosts | default([]))
+        fail_msg: "A record '{{ item.ip }} {{ item.name }}' not found in Pi-hole."
+        success_msg: "A record '{{ item.ip }} {{ item.name }}' is present."
+      loop: "{{ a_records }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert each AAAA record is present in the API response
+      ansible.builtin.assert:
+        that: (item.ip ~ ' ' ~ item.name) in (_dns_api.json.config.dns.hosts | default([]))
+        fail_msg: "AAAA record '{{ item.ip }} {{ item.name }}' not found in Pi-hole."
+        success_msg: "AAAA record '{{ item.ip }} {{ item.name }}' is present."
+      loop: "{{ aaaa_records }}"
+      loop_control:
+        label: "{{ item.name }}"
+
+    - name: Assert nas01.acme.lab has both A and AAAA records (coexistence)
+      ansible.builtin.assert:
+        that:
+          - "'192.168.88.10 nas01.acme.lab' in (_dns_api.json.config.dns.hosts | default([]))"
+          - "'fd00:dead:beef::10 nas01.acme.lab' in (_dns_api.json.config.dns.hosts | default([]))"
         fail_msg: >-
-          Expected 9 static DNS records (6 A + 3 AAAA) but Pi-hole reports
-          {{ (_dns_api_response.json.config.dns.hosts | default([])) | length }}.
-        success_msg: "Pi-hole reports 9 static DNS records as expected."
+          nas01.acme.lab does not have both A and AAAA records.
+          Current hosts: {{ _dns_api.json.config.dns.hosts | default([]) }}
+        success_msg: "nas01.acme.lab has both A and AAAA records as expected."
 
     - name: Retrieve all CNAME records from Pi-hole API
       ansible.builtin.uri:
@@ -220,15 +237,18 @@
         headers:
           sid: "{{ auth_result.sid }}"
         status_code: 200
-      register: _cname_api_response
+      register: _cname_api
 
-    - name: Assert exactly 4 CNAME records are present in Pi-hole
+    - name: Assert each CNAME record is present in the API response
       ansible.builtin.assert:
-        that: (_cname_api_response.json.config.dns.cnameRecords | default([])) | length == 4
-        fail_msg: >-
-          Expected 4 CNAME records but Pi-hole reports
-          {{ (_cname_api_response.json.config.dns.cnameRecords | default([])) | length }}.
-        success_msg: "Pi-hole reports 4 CNAME records as expected."
+        that: >-
+          (item.cname ~ ',' ~ item.name)
+          in (_cname_api.json.config.dns.cnameRecords | default([]))
+        fail_msg: "CNAME record '{{ item.cname }},{{ item.name }}' not found in Pi-hole."
+        success_msg: "CNAME record '{{ item.cname }} -> {{ item.name }}' is present."
+      loop: "{{ cname_records }}"
+      loop_control:
+        label: "{{ item.cname }}"
 
     - name: Retrieve all DHCP reservations from Pi-hole API
       ansible.builtin.uri:
@@ -237,12 +257,17 @@
         headers:
           sid: "{{ auth_result.sid }}"
         status_code: 200
-      register: _dhcp_api_response
+      register: _dhcp_api
 
-    - name: Assert exactly 5 DHCP reservations are present in Pi-hole
+    - name: Assert each DHCP reservation is present in the API response
       ansible.builtin.assert:
-        that: (_dhcp_api_response.json.config.dhcp.hosts | default([])) | length == 5
-        fail_msg: >-
-          Expected 5 DHCP reservations but Pi-hole reports
-          {{ (_dhcp_api_response.json.config.dhcp.hosts | default([])) | length }}.
-        success_msg: "Pi-hole reports 5 DHCP reservations as expected."
+        that: >-
+          _dhcp_api.json.config.dhcp.hosts | default([])
+          | map('lower')
+          | select('equalto', item.hw | lower ~ ',' ~ item.ip ~ ',' ~ item.name)
+          | list | length == 1
+        fail_msg: "DHCP reservation '{{ item.hw }},{{ item.ip }},{{ item.name }}' not found in Pi-hole."
+        success_msg: "DHCP reservation '{{ item.name }}' ({{ item.hw }}) is present."
+      loop: "{{ dhcp_reservations }}"
+      loop_control:
+        label: "{{ item.name }}"

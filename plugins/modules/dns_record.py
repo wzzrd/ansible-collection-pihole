@@ -14,7 +14,7 @@ short_description: Manage Pi-hole static DNS records (A/AAAA records) via its AP
 version_added: "1.0.0"
 
 description:
-  - This module allows you to create or delete static A records (IP → hostname)
+  - This module allows you to create or delete static DNS records (A and AAAA)
     in a Pi-hole instance using its API.
   - It supports idempotent management of entries.
   - You must provide a valid session ID (SID) for authentication.
