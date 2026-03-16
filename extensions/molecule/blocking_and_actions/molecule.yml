@@ -1,0 +1,65 @@
+---
+# Molecule scenario: blocking_and_actions
+#
+# Tests the blocking module (enable/disable/timer) and the action module
+# (gravity, restartdns, flush_logs, flush_arp) against a real Pi-hole
+# instance in Docker.
+#
+# NOTE: gravity always reports changed=true (non-idempotent by design).
+# The idempotence step is therefore omitted from test_sequence.
+#
+# Usage:
+#   molecule test -s blocking_and_actions
+#   PIHOLE_VERSION=2024.07.0 molecule test -s blocking_and_actions
+
+dependency:
+  name: galaxy
+  options:
+    ignore-certs: true
+    ignore-errors: true
+    requirements-file: requirements.yml
+
+driver:
+  name: podman
+
+platforms:
+  - name: pihole-blocking-actions
+    image: "docker.io/pihole/pihole:${PIHOLE_VERSION:-latest}"
+    env:
+      FTLCONF_webserver_api_password: "molecule_test_password"
+      FTLCONF_dns_upstreams: "8.8.8.8;8.8.4.4"
+      FTLCONF_dns_listeningMode: ALL
+      TZ: "UTC"
+    published_ports:
+      - "127.0.0.1:8082:80/tcp"
+    capabilities:
+      - NET_ADMIN
+
+provisioner:
+  name: ansible
+  log: true
+  env:
+    ANSIBLE_COLLECTIONS_PATHS: "${HOME}/.ansible/collections:/usr/share/ansible/collections"
+  inventory:
+    hosts:
+      all:
+        hosts:
+          localhost:
+            ansible_connection: local
+            pihole_url: "http://localhost:8082"
+            pihole_password: "molecule_test_password"
+            molecule_debug: true
+
+verifier:
+  name: ansible
+
+scenario:
+  name: blocking_and_actions
+  test_sequence:
+    - dependency
+    - create
+    - prepare
+    - converge
+    - verify
+    - cleanup
+    - destroy

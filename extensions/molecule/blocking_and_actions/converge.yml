@@ -1,0 +1,132 @@
+---
+# Converge playbook for the blocking_and_actions scenario.
+#
+# Exercises the blocking module (enable/disable/timer) and all four
+# action module choices (gravity, restartdns, flush_logs, flush_arp).
+#
+# NOTE: the gravity action always reports changed=true – this is expected
+# and intentional. The idempotence step is omitted from test_sequence in
+# molecule.yml for this reason.
+
+- name: Converge – blocking control and system actions
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8082"
+    pihole_password: "molecule_test_password"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Blocking – enable                                                    #
+    # ------------------------------------------------------------------ #
+    - name: Ensure Pi-hole blocking is enabled
+      wzzrd.pihole.blocking:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        enabled: true
+      register: _blocking_enable
+
+    - name: Assert blocking enable reported a result
+      ansible.builtin.assert:
+        that: _blocking_enable.status is defined
+        fail_msg: "blocking module did not return a status dict."
+
+    # ------------------------------------------------------------------ #
+    # Blocking – disable with a timer, then immediately re-enable          #
+    # Using a short timer (30 s) so the container doesn't stay dark long. #
+    # ------------------------------------------------------------------ #
+    - name: Disable Pi-hole blocking with a 30-second timer
+      wzzrd.pihole.blocking:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        enabled: false
+        timer: 30
+      register: _blocking_disable
+
+    - name: Assert blocking was disabled
+      ansible.builtin.assert:
+        that: _blocking_disable.changed
+        fail_msg: "Disabling blocking should have reported changed=true."
+
+    - name: Re-enable blocking immediately (overrides the timer)
+      wzzrd.pihole.blocking:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        enabled: true
+        force: true
+      register: _blocking_reenable
+
+    - name: Assert re-enable was applied
+      ansible.builtin.assert:
+        that: _blocking_reenable.changed
+        fail_msg: "Re-enabling blocking with force=true should report changed=true."
+
+    # ------------------------------------------------------------------ #
+    # Actions                                                              #
+    # ------------------------------------------------------------------ #
+    - name: Restart Pi-hole DNS service
+      wzzrd.pihole.action:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        action: restartdns
+      register: _restartdns
+
+    - name: Assert restartdns reported changed
+      ansible.builtin.assert:
+        that: _restartdns.changed
+        fail_msg: "restartdns action should always report changed=true."
+
+    - name: Flush Pi-hole DNS logs
+      wzzrd.pihole.action:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        action: flush_logs
+      register: _flush_logs
+
+    - name: Assert flush_logs reported changed
+      ansible.builtin.assert:
+        that: _flush_logs.changed
+        fail_msg: "flush_logs action should always report changed=true."
+
+    - name: wait
+      ansible.builtin.pause:
+        seconds: 3
+
+    - name: Flush Pi-hole network (ARP) table
+      wzzrd.pihole.action:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        action: flush_arp
+      register: _flush_arp
+
+    - name: Assert flush_arp reported changed
+      ansible.builtin.assert:
+        that: _flush_arp.changed
+        fail_msg: "flush_arp action should always report changed=true."
+
+    - name: Update gravity (download adlists)
+      wzzrd.pihole.action:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        action: gravity
+      register: _gravity
+
+    - name: Assert gravity reported changed
+      ansible.builtin.assert:
+        that: _gravity.changed
+        fail_msg: "gravity action should always report changed=true."

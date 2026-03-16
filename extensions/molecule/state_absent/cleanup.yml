@@ -1,0 +1,12 @@
+---
+# Cleanup playbook for the state_absent scenario.
+# All resources were deleted by converge.yml; nothing remains to remove.
+
+- name: Cleanup – state_absent (no-op)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Nothing to clean up for state_absent
+      ansible.builtin.debug:
+        msg: "Cleanup complete – all resources were removed by converge. Container will be destroyed."

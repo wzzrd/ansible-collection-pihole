@@ -1,0 +1,12 @@
+---
+# Cleanup playbook for the blocking_and_actions scenario.
+# Blocking state is container-scoped; nothing to clean up explicitly.
+
+- name: Cleanup – blocking_and_actions (no-op)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Nothing to clean up for blocking_and_actions
+      ansible.builtin.debug:
+        msg: "Cleanup complete – container will be destroyed by molecule."

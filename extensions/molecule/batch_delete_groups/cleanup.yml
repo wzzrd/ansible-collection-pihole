@@ -1,0 +1,12 @@
+---
+# Cleanup playbook for the batch_delete_groups scenario.
+# All groups were deleted by converge.yml; nothing remains to remove.
+
+- name: Cleanup – batch_delete_groups (no-op)
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  tasks:
+    - name: Nothing to clean up for batch_delete_groups
+      ansible.builtin.debug:
+        msg: "Cleanup complete – all test groups were removed by converge. Container will be destroyed."

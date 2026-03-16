@@ -1,0 +1,127 @@
+---
+# Wait for the Pi-hole API, enable DHCP, then create one of each resource
+# type so that converge.yml has something to delete with state: absent.
+#
+# Fictitious organisation: Acme Labs (minimal fixture set)
+#   group:   TestGroup
+#   client:  192.168.88.201 (member of TestGroup)
+#   adlist:  https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts (block)
+#   domain:  blocked.acme-test.lab (deny / exact / Default)
+#   A record: 192.168.88.201  absent-host.acme.lab
+#   CNAME:   alias.acme.lab -> absent-host.acme.lab
+#   DHCP:    de:ad:be:ef:ff:01  192.168.88.201  absent-host.acme.lab
+
+- name: Prepare Pi-hole for state_absent testing
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8083"
+    pihole_password: "molecule_test_password"
+
+  tasks:
+    - name: Wait for Pi-hole API to become reachable
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/auth"
+        method: GET
+        status_code: [200, 401, 403]
+        timeout: 5
+      register: _pihole_ready
+      until: _pihole_ready.status in [200, 401, 403]
+      retries: 36
+      delay: 5
+
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Create one of every resource type                                   #
+    # ------------------------------------------------------------------ #
+    - name: Create TestGroup
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "TestGroup"
+        comment: "Temporary group for state_absent tests"
+        enabled: true
+        state: present
+      retries: 5
+      delay: 5
+
+    - name: Create test client
+      wzzrd.pihole.client:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        client: "192.168.88.201"
+        comment: "Test client for state_absent scenario"
+        groups: ["TestGroup"]
+        state: present
+      retries: 5
+      delay: 5
+
+    - name: Create test adlist
+      wzzrd.pihole.adlist:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        address: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+        type: block
+        comment: "StevenBlack – state_absent test fixture"
+        groups: ["Default"]
+        enabled: true
+        state: present
+      retries: 5
+      delay: 5
+
+    - name: Create test deny domain
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "blocked.acme-test.lab"
+        type: deny
+        kind: exact
+        comment: "Test deny domain for state_absent scenario"
+        groups: ["Default"]
+        state: present
+      retries: 5
+      delay: 5
+
+    - name: Create test A record
+      wzzrd.pihole.dns_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        ip: "192.168.88.201"
+        name: "absent-host.acme.lab"
+        state: present
+        unique: true
+      retries: 5
+      delay: 5
+
+    - name: Create test CNAME record
+      wzzrd.pihole.cname_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        cname: "alias.acme.lab"
+        name: "absent-host.acme.lab"
+        state: present
+        unique: true
+      retries: 5
+      delay: 5
+
+    - name: Create test DHCP reservation
+      wzzrd.pihole.dhcp_reservation:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        hw: "de:ad:be:ef:ff:01"
+        ip: "192.168.88.201"
+        name: "absent-host.acme.lab"
+        state: present
+      retries: 5
+      delay: 5

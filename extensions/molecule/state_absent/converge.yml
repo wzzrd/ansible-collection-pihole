@@ -1,0 +1,127 @@
+---
+# Converge playbook for the state_absent scenario.
+#
+# Deletes every resource that prepare.yml created, using state: absent.
+# Deletion order matters: clients before groups (a client references a
+# group, but Pi-hole's API allows either order – we still follow the
+# logical dependency to be safe).
+#
+# After converge, all resources are gone.  verify.yml re-runs each
+# deletion task in check_mode and asserts changed=false (idempotent
+# absence), then spot-checks the API to confirm nothing lingers.
+
+- name: Converge – remove all test resources with state absent
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8083"
+    pihole_password: "molecule_test_password"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # DHCP reservation                                                     #
+    # ------------------------------------------------------------------ #
+    - name: Ensure test DHCP reservation is absent
+      wzzrd.pihole.dhcp_reservation:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        hw: "de:ad:be:ef:ff:01"
+        ip: "192.168.88.201"
+        name: "absent-host.acme.lab"
+        state: absent
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # CNAME record                                                         #
+    # ------------------------------------------------------------------ #
+    - name: Ensure test CNAME record is absent
+      wzzrd.pihole.cname_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        cname: "alias.acme.lab"
+        name: "absent-host.acme.lab"
+        state: absent
+        unique: true
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # A record                                                             #
+    # ------------------------------------------------------------------ #
+    - name: Ensure test A record is absent
+      wzzrd.pihole.dns_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        ip: "192.168.88.201"
+        name: "absent-host.acme.lab"
+        state: absent
+        unique: true
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Deny domain                                                          #
+    # ------------------------------------------------------------------ #
+    - name: Ensure test deny domain is absent
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "blocked.acme-test.lab"
+        type: deny
+        kind: exact
+        state: absent
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Adlist                                                               #
+    # ------------------------------------------------------------------ #
+    - name: Ensure test adlist is absent
+      wzzrd.pihole.adlist:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        address: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+        type: block
+        state: absent
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Client (before group, logical dependency)                            #
+    # ------------------------------------------------------------------ #
+    - name: Ensure test client is absent
+      wzzrd.pihole.client:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        client: "192.168.88.201"
+        state: absent
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Group                                                                #
+    # ------------------------------------------------------------------ #
+    - name: Ensure TestGroup is absent
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "TestGroup"
+        state: absent
+      retries: 5
+      delay: 5

@@ -1,0 +1,68 @@
+---
+# Verify playbook for the blocking_and_actions scenario.
+#
+# Confirms that blocking is enabled after converge, and that attempting
+# to enable it again (check_mode) reports no change (idempotent).
+# Also spot-checks the Pi-hole /api/blocking endpoint directly.
+
+- name: Verify blocking is enabled and actions completed successfully
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8082"
+    pihole_password: "molecule_test_password"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Blocking idempotency                                                 #
+    # ------------------------------------------------------------------ #
+    - name: Verify blocking enabled is idempotent (check mode)
+      wzzrd.pihole.blocking:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        enabled: true
+      check_mode: true
+      register: _blocking_check
+
+    - name: Assert blocking enabled reports no change in check mode
+      ansible.builtin.assert:
+        that: not _blocking_check.changed
+        fail_msg: >-
+          blocking module reported changed=true in check mode – blocking
+          may not be enabled as expected after converge.
+        success_msg: "blocking is enabled and idempotent."
+
+    # ------------------------------------------------------------------ #
+    # Spot-check via Pi-hole API                                           #
+    # ------------------------------------------------------------------ #
+    - name: Retrieve blocking status from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/dns/blocking"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _blocking_api
+
+    - name: Assert Pi-hole API reports blocking as enabled
+      ansible.builtin.assert:
+        that: _blocking_api.json.blocking == "enabled"
+        fail_msg: >-
+          Pi-hole API reports blocking='{{ _blocking_api.json.blocking }}'
+          – expected 'enabled'.
+        success_msg: "Pi-hole API confirms blocking is enabled."

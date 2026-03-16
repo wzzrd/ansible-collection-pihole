@@ -1,0 +1,221 @@
+---
+# Verify playbook for the state_absent scenario.
+#
+# Re-runs every converge deletion task in check_mode and asserts
+# changed=false (idempotent absence).  Also spot-checks the Pi-hole
+# API directly to confirm each resource type is truly gone.
+
+- name: Verify all resources are absent and deletion is idempotent
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8083"
+    pihole_password: "molecule_test_password"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Idempotency checks (check_mode – should all report changed=false)   #
+    # ------------------------------------------------------------------ #
+    - name: Verify DHCP reservation absence is idempotent (check mode)
+      wzzrd.pihole.dhcp_reservation:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        hw: "de:ad:be:ef:ff:01"
+        ip: "192.168.88.201"
+        name: "absent-host.acme.lab"
+        state: absent
+      check_mode: true
+      register: _dhcp_check
+
+    - name: Assert DHCP reservation is already absent
+      ansible.builtin.assert:
+        that: not _dhcp_check.changed
+        fail_msg: "DHCP reservation reported changed=true – it may still exist."
+        success_msg: "DHCP reservation is absent (idempotent)."
+
+    - name: Verify CNAME record absence is idempotent (check mode)
+      wzzrd.pihole.cname_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        cname: "alias.acme.lab"
+        name: "absent-host.acme.lab"
+        state: absent
+        unique: true
+      check_mode: true
+      register: _cname_check
+
+    - name: Assert CNAME record is already absent
+      ansible.builtin.assert:
+        that: not _cname_check.changed
+        fail_msg: "CNAME record reported changed=true – it may still exist."
+        success_msg: "CNAME record is absent (idempotent)."
+
+    - name: Verify A record absence is idempotent (check mode)
+      wzzrd.pihole.dns_record:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        ip: "192.168.88.201"
+        name: "absent-host.acme.lab"
+        state: absent
+        unique: true
+      check_mode: true
+      register: _dns_check
+
+    - name: Assert A record is already absent
+      ansible.builtin.assert:
+        that: not _dns_check.changed
+        fail_msg: "A record reported changed=true – it may still exist."
+        success_msg: "A record is absent (idempotent)."
+
+    - name: Verify deny domain absence is idempotent (check mode)
+      wzzrd.pihole.domain:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        domain: "blocked.acme-test.lab"
+        type: deny
+        kind: exact
+        state: absent
+      check_mode: true
+      register: _domain_check
+
+    - name: Assert deny domain is already absent
+      ansible.builtin.assert:
+        that: not _domain_check.changed
+        fail_msg: "Deny domain reported changed=true – it may still exist."
+        success_msg: "Deny domain is absent (idempotent)."
+
+    - name: Verify adlist absence is idempotent (check mode)
+      wzzrd.pihole.adlist:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        address: "https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts"
+        type: block
+        state: absent
+      check_mode: true
+      register: _adlist_check
+
+    - name: Assert adlist is already absent
+      ansible.builtin.assert:
+        that: not _adlist_check.changed
+        fail_msg: "Adlist reported changed=true – it may still exist."
+        success_msg: "Adlist is absent (idempotent)."
+
+    - name: Verify client absence is idempotent (check mode)
+      wzzrd.pihole.client:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        client: "192.168.88.201"
+        state: absent
+      check_mode: true
+      register: _client_check
+
+    - name: Assert client is already absent
+      ansible.builtin.assert:
+        that: not _client_check.changed
+        fail_msg: "Client reported changed=true – it may still exist."
+        success_msg: "Client is absent (idempotent)."
+
+    - name: Verify TestGroup absence is idempotent (check mode)
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "TestGroup"
+        state: absent
+      check_mode: true
+      register: _group_check
+
+    - name: Assert TestGroup is already absent
+      ansible.builtin.assert:
+        that: not _group_check.changed
+        fail_msg: "TestGroup reported changed=true – it may still exist."
+        success_msg: "TestGroup is absent (idempotent)."
+
+    # ------------------------------------------------------------------ #
+    # Spot-check via Pi-hole API                                           #
+    # ------------------------------------------------------------------ #
+    - name: Retrieve groups list from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/groups"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _groups_api
+
+    - name: Assert TestGroup is not in the groups list
+      ansible.builtin.assert:
+        that: >-
+          _groups_api.json.groups
+          | selectattr('name', 'equalto', 'TestGroup')
+          | list | length == 0
+        fail_msg: "TestGroup still appears in the Pi-hole API groups list."
+        success_msg: "TestGroup is confirmed absent from Pi-hole."
+
+    - name: Retrieve static DNS records from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/config/dns/hosts"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _dns_api
+
+    - name: Assert absent-host.acme.lab A record is gone
+      ansible.builtin.assert:
+        that: >-
+          (_dns_api.json.config.dns.hosts | default([]))
+          | select('search', 'absent-host\.acme\.lab')
+          | list | length == 0
+        fail_msg: "absent-host.acme.lab still appears in static DNS records."
+        success_msg: "absent-host.acme.lab A record is confirmed absent."
+
+    - name: Retrieve CNAME records from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/config/dns/cnameRecords"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _cname_api
+
+    - name: Assert alias.acme.lab CNAME is gone
+      ansible.builtin.assert:
+        that: >-
+          (_cname_api.json.config.dns.cnameRecords | default([]))
+          | select('search', 'alias\.acme\.lab')
+          | list | length == 0
+        fail_msg: "alias.acme.lab CNAME still appears in Pi-hole."
+        success_msg: "alias.acme.lab CNAME is confirmed absent."
+
+    - name: Retrieve adlists from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/lists"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _lists_api
+
+    - name: Assert StevenBlack adlist is gone
+      ansible.builtin.assert:
+        that: >-
+          _lists_api.json.lists
+          | selectattr('address', 'search', 'StevenBlack')
+          | list | length == 0
+        fail_msg: "StevenBlack adlist still appears in Pi-hole."
+        success_msg: "StevenBlack adlist is confirmed absent."

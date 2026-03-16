@@ -52,7 +52,7 @@ Raise the most specific subclass. Modules catch these and call `module.fail_json
 |---|---|
 | `auth.py` | POST /api/auth, returns sid |
 | `action.py` | POST /api/action/{action} |
-| `blocking.py` | GET/POST /api/blocking |
+| `blocking.py` | GET/POST /api/dns/blocking |
 | `groups.py` | CRUD for groups |
 | `client.py` | CRUD for clients |
 | `dns.py` | Static DNS hosts (A/AAAA) |
@@ -89,7 +89,7 @@ Session IDs can expire. In Molecule verify tasks, add retries (see below).
 | Clients | `GET/POST/PUT/DELETE /api/clients` |
 | Adlists | `GET/POST/PUT/DELETE /api/lists` |
 | Domains | `GET/POST/PUT/DELETE /api/domains/{type}/{kind}/{domain}` |
-| Blocking | `GET/POST /api/blocking` |
+| Blocking | `GET/POST /api/dns/blocking` |
 | Actions | `POST /api/action/{gravity,restartdns,...}` |
 | Config (bulk) | `GET/PUT /api/config` |
 
@@ -195,23 +195,9 @@ After converge makes many API writes, Pi-hole's FTL process may briefly reload, 
   until: auth_result is not failed
 ```
 
-### DHCP tests require DHCP enabled
+### DHCP reservations do not require DHCP to be active
 
-Pi-hole's DHCP server is disabled by default. Before testing DHCP reservations, enable it in `prepare.yml` via `PUT /api/config` with the `sid` header:
-
-```yaml
-- name: Enable DHCP
-  uri:
-    url: "{{ pihole_url }}/api/config"
-    method: PUT
-    headers:
-      sid: "{{ pihole_sid }}"
-    body_format: json
-    body:
-      dhcp:
-        active: true
-        ...
-```
+Pi-hole v6 allows creating, listing, and deleting static DHCP reservations via `api/config/dhcp/hosts` regardless of whether the DHCP server daemon is enabled. There is no need to pre-enable DHCP in `prepare.yml` before testing `dhcp_reservation`. The `PUT /api/config` bulk-config endpoint does not exist in Pi-hole v6.
 
 ### Container hostname collision
 

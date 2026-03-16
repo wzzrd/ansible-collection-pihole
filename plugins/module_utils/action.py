@@ -68,10 +68,12 @@ def perform_action(client: PiholeApiClient, action: str) -> Dict[str, Any]:
         response = client._request("POST", endpoint, timeout=timeout)
         response.raise_for_status()
 
-        # Try to parse as JSON, fall back to text if not JSON
+        # Try to parse as JSON, fall back to text if not JSON.
+        # PiholeResponse.json() converts ValueError → PiholeApiError, so we
+        # catch PiholeApiError here rather than ValueError.
         try:
             return response.json()
-        except ValueError:
+        except PiholeApiError:
             return {
                 "success": True,
                 "message": f"Action '{action}' performed successfully",

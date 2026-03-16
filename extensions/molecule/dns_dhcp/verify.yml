@@ -191,7 +191,10 @@
         label: "{{ item.item.cname }}"
 
     # ------------------------------------------------------------------ #
-    # Spot-check via Pi-hole API: confirm static DNS list is non-empty    #
+    # Spot-check via Pi-hole API: confirm exact record counts             #
+    # 6 A records + 3 AAAA records = 9 entries in dns/hosts              #
+    # 4 CNAME records                                                     #
+    # 5 DHCP reservations                                                 #
     # ------------------------------------------------------------------ #
     - name: Retrieve all static DNS records from Pi-hole API
       ansible.builtin.uri:
@@ -202,11 +205,13 @@
         status_code: 200
       register: _dns_api_response
 
-    - name: Assert at least one static DNS record is present in Pi-hole
+    - name: Assert exactly 9 static DNS records are present in Pi-hole
       ansible.builtin.assert:
-        that: (_dns_api_response.json.config.dns.hosts | default([])) | length > 0
-        fail_msg: "Pi-hole API returned no static DNS records – converge may have failed silently."
-        success_msg: "Pi-hole reports {{ (_dns_api_response.json.config.dns.hosts | default([])) | length }} static DNS record(s)."
+        that: (_dns_api_response.json.config.dns.hosts | default([])) | length == 9
+        fail_msg: >-
+          Expected 9 static DNS records (6 A + 3 AAAA) but Pi-hole reports
+          {{ (_dns_api_response.json.config.dns.hosts | default([])) | length }}.
+        success_msg: "Pi-hole reports 9 static DNS records as expected."
 
     - name: Retrieve all CNAME records from Pi-hole API
       ansible.builtin.uri:
@@ -217,8 +222,27 @@
         status_code: 200
       register: _cname_api_response
 
-    - name: Assert at least one CNAME record is present in Pi-hole
+    - name: Assert exactly 4 CNAME records are present in Pi-hole
       ansible.builtin.assert:
-        that: (_cname_api_response.json.config.dns.cnameRecords | default([])) | length > 0
-        fail_msg: "Pi-hole API returned no CNAME records – converge may have failed silently."
-        success_msg: "Pi-hole reports {{ (_cname_api_response.json.config.dns.cnameRecords | default([])) | length }} CNAME record(s)."
+        that: (_cname_api_response.json.config.dns.cnameRecords | default([])) | length == 4
+        fail_msg: >-
+          Expected 4 CNAME records but Pi-hole reports
+          {{ (_cname_api_response.json.config.dns.cnameRecords | default([])) | length }}.
+        success_msg: "Pi-hole reports 4 CNAME records as expected."
+
+    - name: Retrieve all DHCP reservations from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/config/dhcp/hosts"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _dhcp_api_response
+
+    - name: Assert exactly 5 DHCP reservations are present in Pi-hole
+      ansible.builtin.assert:
+        that: (_dhcp_api_response.json.config.dhcp.hosts | default([])) | length == 5
+        fail_msg: >-
+          Expected 5 DHCP reservations but Pi-hole reports
+          {{ (_dhcp_api_response.json.config.dhcp.hosts | default([])) | length }}.
+        success_msg: "Pi-hole reports 5 DHCP reservations as expected."

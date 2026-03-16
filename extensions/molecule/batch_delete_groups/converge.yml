@@ -1,0 +1,52 @@
+---
+# Converge playbook for the batch_delete_groups scenario.
+#
+# prepare.yml created three groups (Alpha, Beta, Gamma).
+# This playbook deletes all three in a single batch_delete_groups call.
+#
+# On the idempotence re-run the groups no longer exist, so
+# batch_delete_groups reports changed=false – confirming idempotent
+# behaviour when none of the named groups are present.
+
+- name: Converge – batch delete test groups
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8084"
+    pihole_password: "molecule_test_password"
+
+    groups_to_delete:
+      - "Alpha"
+      - "Beta"
+      - "Gamma"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Batch delete                                                         #
+    # ------------------------------------------------------------------ #
+    - name: Batch delete Alpha, Beta and Gamma groups
+      wzzrd.pihole.batch_delete_groups:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        names: "{{ groups_to_delete }}"
+      register: _batch_delete
+
+    - name: Assert batch delete reported a result
+      ansible.builtin.assert:
+        that: _batch_delete is defined
+        fail_msg: "batch_delete_groups did not return a result."

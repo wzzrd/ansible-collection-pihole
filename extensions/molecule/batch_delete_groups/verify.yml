@@ -1,0 +1,83 @@
+---
+# Verify playbook for the batch_delete_groups scenario.
+#
+# Confirms that Alpha, Beta and Gamma are gone after converge, and that
+# the group module with state: absent reports no change (already absent).
+# Also spot-checks the Pi-hole API directly.
+
+- name: Verify Alpha, Beta and Gamma groups are absent
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8084"
+    pihole_password: "molecule_test_password"
+
+    test_groups:
+      - "Alpha"
+      - "Beta"
+      - "Gamma"
+
+  tasks:
+    # ------------------------------------------------------------------ #
+    # Authentication                                                       #
+    # ------------------------------------------------------------------ #
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    # ------------------------------------------------------------------ #
+    # Idempotency: state: absent for each group should report no change   #
+    # ------------------------------------------------------------------ #
+    - name: Verify each group is already absent (check mode)
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "{{ item }}"
+        state: absent
+      loop: "{{ test_groups }}"
+      loop_control:
+        label: "{{ item }}"
+      check_mode: true
+      register: _group_absent_check
+
+    - name: Assert all groups report no change (already absent)
+      ansible.builtin.assert:
+        that: not item.changed
+        fail_msg: >-
+          Group '{{ item.item }}' reported changed=true – it may still
+          exist after batch_delete_groups ran.
+        success_msg: "Group '{{ item.item }}' is absent (idempotent)."
+      loop: "{{ _group_absent_check.results }}"
+      loop_control:
+        label: "{{ item.item }}"
+
+    # ------------------------------------------------------------------ #
+    # Spot-check via Pi-hole API                                           #
+    # ------------------------------------------------------------------ #
+    - name: Retrieve groups list from Pi-hole API
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/groups"
+        method: GET
+        headers:
+          sid: "{{ auth_result.sid }}"
+        status_code: 200
+      register: _groups_api
+
+    - name: Assert none of the test groups appear in the API response
+      ansible.builtin.assert:
+        that: >-
+          test_groups
+          | intersect(_groups_api.json.groups | map(attribute='name') | list)
+          | length == 0
+        fail_msg: >-
+          One or more test groups still appear in Pi-hole API response.
+          Found: {{ test_groups | intersect(_groups_api.json.groups | map(attribute='name') | list) }}
+        success_msg: "Alpha, Beta and Gamma are confirmed absent from Pi-hole."

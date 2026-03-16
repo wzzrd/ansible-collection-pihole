@@ -1,0 +1,56 @@
+---
+# Wait for the Pi-hole API to become available, then pre-create the groups
+# that converge.yml will batch-delete.
+
+- name: Prepare Pi-hole for batch_delete_groups testing
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    ansible_python_interpreter: "{{ ansible_playbook_python }}"
+    pihole_url: "http://localhost:8084"
+    pihole_password: "molecule_test_password"
+
+    test_groups:
+      - name: "Alpha"
+        comment: "Test group Alpha – created by prepare.yml"
+      - name: "Beta"
+        comment: "Test group Beta – created by prepare.yml"
+      - name: "Gamma"
+        comment: "Test group Gamma – created by prepare.yml"
+
+  tasks:
+    - name: Wait for Pi-hole API to become reachable
+      ansible.builtin.uri:
+        url: "{{ pihole_url }}/api/auth"
+        method: GET
+        status_code: [200, 401, 403]
+        timeout: 5
+      register: _pihole_ready
+      until: _pihole_ready.status in [200, 401, 403]
+      retries: 36
+      delay: 5
+
+    - name: Authenticate with Pi-hole
+      wzzrd.pihole.auth:
+        pihole: "{{ pihole_url }}"
+        password: "{{ pihole_password }}"
+      register: auth_result
+      no_log: "{{ not (molecule_debug | default(false)) }}"
+      retries: 5
+      delay: 5
+
+    - name: Create test groups
+      wzzrd.pihole.group:
+        pihole: "{{ pihole_url }}"
+        sid: "{{ auth_result.sid }}"
+        name: "{{ item.name }}"
+        comment: "{{ item.comment }}"
+        enabled: true
+        state: present
+      loop: "{{ test_groups }}"
+      loop_control:
+        label: "{{ item.name }}"
+      retries: 5
+      delay: 5
