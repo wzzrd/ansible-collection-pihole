@@ -2,17 +2,6 @@
 
 ## Medium
 
-- **Consolidate `_make_response()` / `_mock_client()` into `conftest.py`**
-  Both helpers are copy-pasted identically across all 8 test files. They belong in
-  `tests/unit/conftest.py` as shared fixtures.
-
-- **Fix wrong mock spec and remove spurious `import requests` from all test files**
-  All test files use `MagicMock(spec=requests.Response)` but `client._request()` returns
-  a `PiholeResponse`, not a `requests.Response`. Production code already uses
-  `ansible.module_utils.urls.open_url` exclusively — `requests` is not a dependency of
-  this collection at all. The fix is test-only: replace `spec=requests.Response` with
-  `spec=PiholeResponse` (importing it from `api_client`), and drop `import requests`.
-
 - **Replace manual `%20` URL encoding in `dns.py` and `dhcp.py`**
   `dns.py:110,141` and `dhcp.py:113,148` build URLs with a raw `f"{ip}%20{name}"`
   string. Every other module uses `urllib.parse.quote()`. Unify to the same approach.

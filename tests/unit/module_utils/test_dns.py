@@ -1,9 +1,6 @@
 """Tests for plugins/module_utils/dns.py"""
 
-from unittest.mock import MagicMock
-
 import pytest
-import requests
 
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeApiError,
@@ -16,29 +13,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.dns import (
     delete_static_dns_record,
     get_static_dns_records,
 )
-
-# ---------------------------------------------------------------------------
-# Helpers
-# ---------------------------------------------------------------------------
-
-
-def _make_response(status_code=200, json_data=None, text=""):
-    resp = MagicMock(spec=requests.Response)
-    resp.status_code = status_code
-    resp.text = text
-    resp.json.return_value = json_data or {}
-    resp.raise_for_status = MagicMock()
-    return resp
-
-
-def _mock_client(request_return=None, request_side_effect=None):
-    client = MagicMock()
-    if request_side_effect:
-        client._request.side_effect = request_side_effect
-    else:
-        client._request.return_value = request_return
-    return client
-
+from .helpers import make_response as _make_response, mock_client as _mock_client
 
 DNS_RESPONSE = {
     "config": {
@@ -85,12 +60,12 @@ class TestGetStaticDnsRecords:
         client._request.assert_called_once_with("GET", "api/config/dns/hosts")
 
     def test_auth_error_propagates(self):
-        client = _mock_client(request_side_effect=PiholeAuthError("unauth", 401))
+        client = _mock_client(side_effect=PiholeAuthError("unauth", 401))
         with pytest.raises(PiholeAuthError):
             get_static_dns_records(client)
 
     def test_connection_error_propagates(self):
-        client = _mock_client(request_side_effect=PiholeConnectionError("timeout"))
+        client = _mock_client(side_effect=PiholeConnectionError("timeout"))
         with pytest.raises(PiholeConnectionError):
             get_static_dns_records(client)
 
@@ -171,12 +146,12 @@ class TestAddStaticDnsRecord:
         assert "192.168.88.30%20laptop.acme.lab" in endpoint
 
     def test_auth_error_propagates(self):
-        client = _mock_client(request_side_effect=PiholeAuthError("unauth", 401))
+        client = _mock_client(side_effect=PiholeAuthError("unauth", 401))
         with pytest.raises(PiholeAuthError):
             add_static_dns_record(client, "1.2.3.4", "host.local")
 
     def test_connection_error_propagates(self):
-        client = _mock_client(request_side_effect=PiholeConnectionError("down"))
+        client = _mock_client(side_effect=PiholeConnectionError("down"))
         with pytest.raises(PiholeConnectionError):
             add_static_dns_record(client, "1.2.3.4", "host.local")
 
@@ -214,7 +189,7 @@ class TestDeleteStaticDnsRecord:
         assert "192.168.88.10%20nas01.acme.lab" in endpoint
 
     def test_auth_error_propagates(self):
-        client = _mock_client(request_side_effect=PiholeAuthError("unauth", 401))
+        client = _mock_client(side_effect=PiholeAuthError("unauth", 401))
         with pytest.raises(PiholeAuthError):
             delete_static_dns_record(client, "1.2.3.4", "host.local")
 

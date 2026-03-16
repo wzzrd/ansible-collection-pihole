@@ -1,10 +1,8 @@
 """Tests for plugins/module_utils/client.py"""
 
 import urllib.parse
-from unittest.mock import MagicMock
 
 import pytest
-import requests
 
 from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeApiError,
@@ -17,6 +15,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.client import (
     get_client,
     update_client,
 )
+from .helpers import make_response as _make_response, mock_client as _mock_client
 
 CLIENT_RECORD = {
     "client": "192.168.88.20",
@@ -25,24 +24,6 @@ CLIENT_RECORD = {
 }
 
 CLIENTS_RESPONSE = {"clients": [CLIENT_RECORD]}
-
-
-def _make_response(status_code=200, json_data=None, text=""):
-    resp = MagicMock(spec=requests.Response)
-    resp.status_code = status_code
-    resp.text = text
-    resp.json.return_value = json_data or {}
-    resp.raise_for_status = MagicMock()
-    return resp
-
-
-def _mock_client(return_value=None, side_effect=None):
-    c = MagicMock()
-    if side_effect:
-        c._request.side_effect = side_effect
-    else:
-        c._request.return_value = return_value
-    return c
 
 
 # ---------------------------------------------------------------------------
