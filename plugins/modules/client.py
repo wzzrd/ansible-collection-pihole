@@ -48,7 +48,7 @@ options:
       - To clear the comment, set comment to an empty string.
     required: false
     type: str
-    default: null # Explicitly use null/None as default
+    default: null
   groups:
     description:
       - List of group names to associate with this client.

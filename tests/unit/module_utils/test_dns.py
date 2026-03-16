@@ -11,7 +11,9 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.dns import (
     add_static_dns_record,
     check_static_dns_record_exists,
     delete_static_dns_record,
+    find_conflicting_dns_records,
     get_static_dns_records,
+    parse_dns_records,
 )
 from .helpers import make_response as _make_response, mock_client as _mock_client
 
@@ -198,3 +200,86 @@ class TestDeleteStaticDnsRecord:
         client._request.side_effect = RuntimeError("crash")
         with pytest.raises(PiholeApiError):
             delete_static_dns_record(client, "1.2.3.4", "host.local")
+
+
+# ---------------------------------------------------------------------------
+# parse_dns_records
+# ---------------------------------------------------------------------------
+
+
+class TestParseDnsRecords:
+    def test_parses_ipv4_records(self):
+        raw = ["192.168.1.10 host.local", "10.0.0.1 other.local"]
+        result = parse_dns_records(raw)
+        assert ("192.168.1.10", "host.local") in result
+        assert ("10.0.0.1", "other.local") in result
+
+    def test_parses_ipv6_records(self):
+        raw = ["fd00::1 host.local"]
+        result = parse_dns_records(raw)
+        assert ("fd00::1", "host.local") in result
+
+    def test_empty_list_returns_empty(self):
+        assert parse_dns_records([]) == []
+
+    def test_malformed_entry_skipped(self):
+        raw = ["onlyone", "192.168.1.10 host.local"]
+        result = parse_dns_records(raw)
+        assert len(result) == 1
+        assert result[0] == ("192.168.1.10", "host.local")
+
+    def test_preserves_order(self):
+        raw = ["1.1.1.1 a.local", "2.2.2.2 b.local", "3.3.3.3 c.local"]
+        result = parse_dns_records(raw)
+        assert result == [("1.1.1.1", "a.local"), ("2.2.2.2", "b.local"), ("3.3.3.3", "c.local")]
+
+
+# ---------------------------------------------------------------------------
+# find_conflicting_dns_records
+# ---------------------------------------------------------------------------
+
+
+class TestFindConflictingDnsRecords:
+    def test_no_conflicts_when_empty(self):
+        assert find_conflicting_dns_records([], "1.2.3.4", "host.local") == []
+
+    def test_exact_match_not_a_conflict(self):
+        records = [("1.2.3.4", "host.local")]
+        assert find_conflicting_dns_records(records, "1.2.3.4", "host.local") == []
+
+    def test_same_ip_different_name_is_conflict(self):
+        records = [("1.2.3.4", "other.local")]
+        result = find_conflicting_dns_records(records, "1.2.3.4", "host.local")
+        assert ("1.2.3.4", "other.local") in result
+
+    def test_same_name_different_ipv4_is_conflict(self):
+        records = [("1.2.3.5", "host.local")]
+        result = find_conflicting_dns_records(records, "1.2.3.4", "host.local")
+        assert ("1.2.3.5", "host.local") in result
+
+    def test_ipv4_and_ipv6_same_name_not_a_conflict(self):
+        # A record and AAAA record for the same hostname must coexist
+        records = [("192.168.1.10", "nas.local")]
+        result = find_conflicting_dns_records(records, "fd00::10", "nas.local")
+        assert result == []
+
+    def test_ipv6_and_ipv4_same_name_not_a_conflict(self):
+        records = [("fd00::10", "nas.local")]
+        result = find_conflicting_dns_records(records, "192.168.1.10", "nas.local")
+        assert result == []
+
+    def test_two_ipv6_same_name_is_conflict(self):
+        records = [("fd00::1", "host.local")]
+        result = find_conflicting_dns_records(records, "fd00::2", "host.local")
+        assert ("fd00::1", "host.local") in result
+
+    def test_multiple_conflicts_returned(self):
+        records = [
+            ("1.2.3.4", "other.local"),   # same IP, different name
+            ("5.6.7.8", "host.local"),    # same name (both IPv4), different IP
+            ("9.0.0.1", "unrelated.local"),  # no conflict
+        ]
+        result = find_conflicting_dns_records(records, "1.2.3.4", "host.local")
+        assert ("1.2.3.4", "other.local") in result
+        assert ("5.6.7.8", "host.local") in result
+        assert ("9.0.0.1", "unrelated.local") not in result

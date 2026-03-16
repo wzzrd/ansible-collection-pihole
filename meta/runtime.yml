@@ -59,4 +59,3 @@ action_groups:
     - dns_record
     - domain
     - group
-    - group_batch_delete

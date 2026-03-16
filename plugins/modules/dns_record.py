@@ -9,7 +9,7 @@ DOCUMENTATION = r"""
 ---
 module: dns_record
 
-short_description: Manage Pi-hole static DNS records (A records) via its API
+short_description: Manage Pi-hole static DNS records (A/AAAA records) via its API
 
 version_added: "1.0.0"
 
