@@ -2,7 +2,9 @@
 
 from unittest.mock import MagicMock
 
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import PiholeResponse
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_client import (
+    PiholeResponse,
+)
 
 
 def make_response(status_code=200, json_data=None, text=""):

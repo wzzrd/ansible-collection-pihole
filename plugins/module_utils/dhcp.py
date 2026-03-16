@@ -24,6 +24,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
+
 def get_dhcp_reservations(client: PiholeApiClient) -> list[str]:
     """
     Get all DHCP reservations from Pi-hole.
@@ -56,6 +57,7 @@ def get_dhcp_reservations(client: PiholeApiClient) -> list[str]:
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve DHCP reservations: {e}")
 
+
 def check_dhcp_reservation_exists(
     client: PiholeApiClient, hw: str, ip: str, name: str
 ) -> bool:
@@ -81,6 +83,7 @@ def check_dhcp_reservation_exists(
     reservations = get_dhcp_reservations(client)
     reservation = f"{hw},{ip},{name}".lower()
     return reservation in [r.lower() for r in reservations]
+
 
 def add_dhcp_reservation(
     client: PiholeApiClient, hw: str, ip: str, name: str
@@ -118,6 +121,7 @@ def add_dhcp_reservation(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to add DHCP reservation for {hw}: {e}")
+
 
 def delete_dhcp_reservation(
     client: PiholeApiClient, hw: str, ip: str, name: str

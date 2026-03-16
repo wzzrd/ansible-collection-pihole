@@ -4,7 +4,9 @@ from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from ansible_collections.wzzrd.pihole.plugins.modules.domain import main
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import PiholeAuthError
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+)
 
 BASE = "ansible_collections.wzzrd.pihole.plugins.modules.domain"
 
@@ -30,7 +32,9 @@ BASE_PARAMS = {
 }
 
 
-def _run(params=None, check_mode=False, existing=None, current_location=None, group_ids=None):
+def _run(
+    params=None, check_mode=False, existing=None, current_location=None, group_ids=None
+):
     result = {}
 
     def fake_exit(**kw):
@@ -84,7 +88,9 @@ class TestDomainModulePresent:
 
     def test_exists_different_type_triggers_update(self):
         params = {**BASE_PARAMS, "type": "allow"}
-        result, _, mock_update, _ = _run(existing=EXISTING_DOMAIN, params=params, group_ids=[0])
+        result, _, mock_update, _ = _run(
+            existing=EXISTING_DOMAIN, params=params, group_ids=[0]
+        )
         assert result.get("changed") is True
         mock_update.assert_called_once()
 
@@ -99,7 +105,9 @@ class TestDomainModuleAbsent:
         return {**BASE_PARAMS, "state": "absent", "type": domain_type, "kind": kind}
 
     def test_exists_in_correct_list_deletes(self):
-        result, _, _, mock_delete = _run(existing=EXISTING_DOMAIN, params=self._absent())
+        result, _, _, mock_delete = _run(
+            existing=EXISTING_DOMAIN, params=self._absent()
+        )
         assert result.get("changed") is True
         mock_delete.assert_called_once()
 
@@ -117,14 +125,19 @@ class TestDomainModuleAbsent:
         mock_mod.params = BASE_PARAMS
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):
                 with patch(f"{BASE}.group_names_to_ids", return_value=[0]):
-                    with patch(f"{BASE}.get_domain",
-                               side_effect=PiholeAuthError("x", 401)):
+                    with patch(
+                        f"{BASE}.get_domain", side_effect=PiholeAuthError("x", 401)
+                    ):
                         try:
                             main()
                         except SystemExit:

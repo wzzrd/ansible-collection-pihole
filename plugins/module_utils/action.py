@@ -25,6 +25,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
+
 def perform_action(client: PiholeApiClient, action: str) -> dict[str, Any]:
     """
     Perform a system action in Pi-hole.

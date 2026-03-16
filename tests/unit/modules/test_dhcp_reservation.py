@@ -4,7 +4,9 @@ from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from ansible_collections.wzzrd.pihole.plugins.modules.dhcp_reservation import main
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import PiholeAuthError
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+)
 
 BASE = "ansible_collections.wzzrd.pihole.plugins.modules.dhcp_reservation"
 
@@ -80,13 +82,19 @@ class TestDhcpReservationModule:
         mock_mod.params = PARAMS
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):
-                with patch(f"{BASE}.check_dhcp_reservation_exists",
-                           side_effect=PiholeAuthError("x", 401)):
+                with patch(
+                    f"{BASE}.check_dhcp_reservation_exists",
+                    side_effect=PiholeAuthError("x", 401),
+                ):
                     try:
                         main()
                     except SystemExit:

@@ -24,6 +24,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
+
 def get_blocking_status(client: PiholeApiClient) -> dict[str, Any]:
     """
     Get the current blocking status from Pi-hole.
@@ -49,6 +50,7 @@ def get_blocking_status(client: PiholeApiClient) -> dict[str, Any]:
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve blocking status: {e}")
+
 
 def set_blocking_status(
     client: PiholeApiClient, enabled: bool, timer: int | None = None

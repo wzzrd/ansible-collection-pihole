@@ -32,7 +32,9 @@ BASE_PARAMS = {
 }
 
 
-def _run(params=None, check_mode=False, existing=None, group_ids=None, delete_return=None):
+def _run(
+    params=None, check_mode=False, existing=None, group_ids=None, delete_return=None
+):
     result = {}
 
     def fake_exit(**kw):
@@ -87,7 +89,9 @@ class TestAdlistModulePresent:
 
     def test_exists_enabled_changed_updates(self):
         params = {**BASE_PARAMS, "enabled": False}
-        result, _, mock_update, _ = _run(existing=EXISTING_ADLIST, params=params, group_ids=[0])
+        result, _, mock_update, _ = _run(
+            existing=EXISTING_ADLIST, params=params, group_ids=[0]
+        )
         assert result.get("changed") is True
         mock_update.assert_called_once()
 
@@ -96,13 +100,19 @@ class TestAdlistModulePresent:
         mock_mod.params = BASE_PARAMS
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):
-                with patch(f"{BASE}.group_names_to_ids",
-                           side_effect=PiholeValidationError("group not found")):
+                with patch(
+                    f"{BASE}.group_names_to_ids",
+                    side_effect=PiholeValidationError("group not found"),
+                ):
                     try:
                         main()
                     except SystemExit:

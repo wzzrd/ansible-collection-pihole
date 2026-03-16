@@ -226,9 +226,7 @@ class PiholeApiClient:
             raise
 
         except ValueError as exc:
-            raise PiholeApiError(
-                f"Invalid JSON response during authentication: {exc}"
-            )
+            raise PiholeApiError(f"Invalid JSON response during authentication: {exc}")
 
         except Exception as exc:
             raise PiholeApiError(f"Unexpected error during authentication: {exc}")

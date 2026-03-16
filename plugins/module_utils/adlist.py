@@ -27,6 +27,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
+
 def get_adlist(
     client: PiholeApiClient, address: str, list_type: str = "block"
 ) -> dict[str, Any] | None:
@@ -81,6 +82,7 @@ def get_adlist(
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve adlist '{address}': {e}")
 
+
 def add_adlist(
     client: PiholeApiClient,
     address: str,
@@ -134,9 +136,8 @@ def add_adlist(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to add adlist '{address}' as {list_type}: {e}"
-        )
+        raise PiholeApiError(f"Failed to add adlist '{address}' as {list_type}: {e}")
+
 
 def update_adlist(
     client: PiholeApiClient,
@@ -209,6 +210,7 @@ def update_adlist(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to update adlist '{address}': {e}")
+
 
 def delete_adlist(
     client: PiholeApiClient, address: str, list_type: str = "block"

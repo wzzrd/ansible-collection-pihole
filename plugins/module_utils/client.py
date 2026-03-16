@@ -26,6 +26,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeNotFoundError,
 )
 
+
 def get_client(client: PiholeApiClient, client_id: str) -> dict[str, Any] | None:
     """
     Get details for a specific client.
@@ -57,6 +58,7 @@ def get_client(client: PiholeApiClient, client_id: str) -> dict[str, Any] | None
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve client '{client_id}': {e}")
 
+
 def add_client(
     client: PiholeApiClient,
     client_id: str,
@@ -80,7 +82,10 @@ def add_client(
         PiholeConnectionError: If connection fails
         PiholeApiError: For other API errors
     """
-    data: dict[str, Any] = {"client": client_id, "groups": group_ids if group_ids is not None else [0]}
+    data: dict[str, Any] = {
+        "client": client_id,
+        "groups": group_ids if group_ids is not None else [0],
+    }
 
     if comment is not None:
         data["comment"] = comment
@@ -93,6 +98,7 @@ def add_client(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to add client '{client_id}': {e}")
+
 
 def update_client(
     client: PiholeApiClient,
@@ -134,6 +140,7 @@ def update_client(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to update client '{client_id}': {e}")
+
 
 def delete_client(client: PiholeApiClient, client_id: str) -> bool:
     """

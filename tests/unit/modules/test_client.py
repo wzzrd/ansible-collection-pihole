@@ -82,7 +82,9 @@ class TestClientModulePresent:
     def test_null_comment_from_api_treated_as_empty(self):
         existing = {**EXISTING_CLIENT, "comment": None}
         params = {**BASE_PARAMS, "comment": ""}
-        result, _, mock_update, _ = _run(existing=existing, params=params, group_ids=[0])
+        result, _, mock_update, _ = _run(
+            existing=existing, params=params, group_ids=[0]
+        )
         assert result.get("changed") is False
 
     def test_invalid_group_fails(self):
@@ -90,13 +92,19 @@ class TestClientModulePresent:
         mock_mod.params = BASE_PARAMS
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):
-                with patch(f"{BASE}.group_names_to_ids",
-                           side_effect=PiholeValidationError("group not found")):
+                with patch(
+                    f"{BASE}.group_names_to_ids",
+                    side_effect=PiholeValidationError("group not found"),
+                ):
                     try:
                         main()
                     except SystemExit:

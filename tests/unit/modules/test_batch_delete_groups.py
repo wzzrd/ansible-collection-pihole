@@ -34,7 +34,9 @@ def _run(params=None, check_mode=False, all_groups=None):
     mock_mod.exit_json.side_effect = fake_exit
     mock_mod.fail_json.side_effect = fake_fail
 
-    mock_get_groups = MagicMock(return_value=all_groups if all_groups is not None else ALL_GROUPS)
+    mock_get_groups = MagicMock(
+        return_value=all_groups if all_groups is not None else ALL_GROUPS
+    )
     mock_batch = MagicMock(return_value={"success": True, "status_code": 204})
 
     with ExitStack() as stack:

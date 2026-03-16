@@ -4,7 +4,9 @@ from contextlib import ExitStack
 from unittest.mock import ANY, MagicMock, patch
 
 from ansible_collections.wzzrd.pihole.plugins.modules.dns_record import main
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import PiholeAuthError
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+)
 
 BASE = "ansible_collections.wzzrd.pihole.plugins.modules.dns_record"
 
@@ -18,8 +20,15 @@ BASE_PARAMS = {
 }
 
 
-def _run(params=None, check_mode=False, raw_records=None, parsed_records=None,
-         exact_exists=False, conflicts=None, add_return=None):
+def _run(
+    params=None,
+    check_mode=False,
+    raw_records=None,
+    parsed_records=None,
+    exact_exists=False,
+    conflicts=None,
+    add_return=None,
+):
     result = {}
 
     def fake_exit(**kw):
@@ -38,7 +47,9 @@ def _run(params=None, check_mode=False, raw_records=None, parsed_records=None,
     mock_mod.fail_json.side_effect = fake_fail
 
     mock_get_raw = MagicMock(return_value=raw_records or [])
-    mock_parse = MagicMock(return_value=parsed_records if parsed_records is not None else [])
+    mock_parse = MagicMock(
+        return_value=parsed_records if parsed_records is not None else []
+    )
     mock_check_exists = MagicMock(return_value=exact_exists)
     mock_conflicts = MagicMock(return_value=conflicts if conflicts is not None else [])
     mock_add = MagicMock(return_value=add_return or {"result": "ok"})
@@ -49,8 +60,12 @@ def _run(params=None, check_mode=False, raw_records=None, parsed_records=None,
         stack.enter_context(patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()))
         stack.enter_context(patch(f"{BASE}.get_static_dns_records", mock_get_raw))
         stack.enter_context(patch(f"{BASE}.parse_dns_records", mock_parse))
-        stack.enter_context(patch(f"{BASE}.check_static_dns_record_exists", mock_check_exists))
-        stack.enter_context(patch(f"{BASE}.find_conflicting_dns_records", mock_conflicts))
+        stack.enter_context(
+            patch(f"{BASE}.check_static_dns_record_exists", mock_check_exists)
+        )
+        stack.enter_context(
+            patch(f"{BASE}.find_conflicting_dns_records", mock_conflicts)
+        )
         stack.enter_context(patch(f"{BASE}.add_static_dns_record", mock_add))
         stack.enter_context(patch(f"{BASE}.delete_static_dns_record", mock_delete))
         try:
@@ -103,8 +118,11 @@ class TestDnsRecordModuleAbsent:
         mock_delete.assert_called_once()
 
     def test_name_all_deletes_all_for_ip(self):
-        parsed = [("192.168.1.10", "host.local"), ("192.168.1.10", "alias.local"),
-                  ("10.0.0.1", "other.local")]
+        parsed = [
+            ("192.168.1.10", "host.local"),
+            ("192.168.1.10", "alias.local"),
+            ("10.0.0.1", "other.local"),
+        ]
         result, _, mock_delete, _ = _run(
             params=self._absent(name="all"), parsed_records=parsed, exact_exists=False
         )
@@ -120,13 +138,19 @@ class TestDnsRecordModuleAbsent:
         mock_mod.params = BASE_PARAMS
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):
-                with patch(f"{BASE}.get_static_dns_records",
-                           side_effect=PiholeAuthError("x", 401)):
+                with patch(
+                    f"{BASE}.get_static_dns_records",
+                    side_effect=PiholeAuthError("x", 401),
+                ):
                     try:
                         main()
                     except SystemExit:

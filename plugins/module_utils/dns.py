@@ -26,6 +26,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
+
 def get_static_dns_records(client: PiholeApiClient) -> list[str]:
     """
     Get all static DNS records from Pi-hole.
@@ -58,6 +59,7 @@ def get_static_dns_records(client: PiholeApiClient) -> list[str]:
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve static DNS records: {e}")
 
+
 def check_static_dns_record_exists(client: PiholeApiClient, ip: str, name: str) -> bool:
     """
     Check if a specific static DNS record exists.
@@ -80,6 +82,7 @@ def check_static_dns_record_exists(client: PiholeApiClient, ip: str, name: str) 
     records = get_static_dns_records(client)
     record = f"{ip} {name}"
     return record in records
+
 
 def add_static_dns_record(
     client: PiholeApiClient, ip: str, name: str
@@ -117,6 +120,7 @@ def add_static_dns_record(
     except Exception as e:
         raise PiholeApiError(f"Failed to add DNS record for {name} ({ip}): {e}")
 
+
 def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> None:
     """
     Delete a static DNS record.
@@ -145,6 +149,7 @@ def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> Non
     except Exception as e:
         raise PiholeApiError(f"Failed to delete DNS record for {name} ({ip}): {e}")
 
+
 def parse_dns_records(raw_records: list[str]) -> list[tuple[str, str]]:
     """
     Parse raw DNS record strings into (ip, name) tuples.
@@ -161,6 +166,7 @@ def parse_dns_records(raw_records: list[str]) -> list[tuple[str, str]]:
         if len(parts) == 2:
             result.append((parts[0], parts[1]))
     return result
+
 
 def find_conflicting_dns_records(
     parsed_records: list[tuple[str, str]], ip: str, name: str

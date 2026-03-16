@@ -4,7 +4,9 @@ from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from ansible_collections.wzzrd.pihole.plugins.modules.blocking import main
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import PiholeAuthError
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+)
 
 BASE = "ansible_collections.wzzrd.pihole.plugins.modules.blocking"
 
@@ -49,8 +51,13 @@ def _run(params, check_mode=False, current_status=None, set_side_effect=None):
 
 
 def _params(enabled=True, timer=0, force=False):
-    return {"pihole": "https://pihole.local", "sid": "sid", "enabled": enabled,
-            "timer": timer, "force": force}
+    return {
+        "pihole": "https://pihole.local",
+        "sid": "sid",
+        "enabled": enabled,
+        "timer": timer,
+        "force": force,
+    }
 
 
 class TestBlockingModule:
@@ -65,7 +72,9 @@ class TestBlockingModule:
         mock_set.assert_called_once()
 
     def test_force_causes_change_even_if_same_state(self):
-        result, mock_set = _run(_params(enabled=True, force=True), current_status=STATUS_ENABLED)
+        result, mock_set = _run(
+            _params(enabled=True, force=True), current_status=STATUS_ENABLED
+        )
         assert result.get("changed") is True
         mock_set.assert_called_once()
 
@@ -75,8 +84,9 @@ class TestBlockingModule:
         assert result.get("changed") is True
 
     def test_check_mode_does_not_call_set(self):
-        result, mock_set = _run(_params(enabled=True), check_mode=True,
-                                current_status=STATUS_DISABLED)
+        result, mock_set = _run(
+            _params(enabled=True), check_mode=True, current_status=STATUS_DISABLED
+        )
         assert result.get("changed") is True
         mock_set.assert_not_called()
 
@@ -85,13 +95,18 @@ class TestBlockingModule:
         mock_mod.params = _params()
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):
-                with patch(f"{BASE}.get_blocking_status",
-                           side_effect=PiholeAuthError("x", 401)):
+                with patch(
+                    f"{BASE}.get_blocking_status", side_effect=PiholeAuthError("x", 401)
+                ):
                     try:
                         main()
                     except SystemExit:

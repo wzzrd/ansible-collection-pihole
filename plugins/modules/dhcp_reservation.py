@@ -5,6 +5,7 @@
 # GNU General Public License v3.0+ (see COPYING or https://www.gnu.org/licenses/gpl-3.0.txt)
 
 from __future__ import annotations
+
 DOCUMENTATION = r"""
 ---
 module: dhcp_reservation
@@ -145,9 +146,7 @@ def main():
         client = PiholeApiClient(pihole_url, sid)
 
         # Check if the reservation exists
-        exists = check_dhcp_reservation_exists(
-            client, hw_address, ip_address, hostname
-        )
+        exists = check_dhcp_reservation_exists(client, hw_address, ip_address, hostname)
 
         if state == "present":
             if exists:
@@ -162,9 +161,7 @@ def main():
                         msg=f"Would add DHCP reservation for MAC {hw_address} ({ip_address} -> {hostname}).",
                     )
 
-                result = add_dhcp_reservation(
-                    client, hw_address, ip_address, hostname
-                )
+                result = add_dhcp_reservation(client, hw_address, ip_address, hostname)
                 module.exit_json(
                     changed=True,
                     result=result,

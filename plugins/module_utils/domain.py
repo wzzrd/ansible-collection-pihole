@@ -27,6 +27,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
+
 def get_domain(
     client: PiholeApiClient,
     domain: str,
@@ -94,6 +95,7 @@ def get_domain(
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve domain '{domain}': {e}")
 
+
 def add_domain(
     client: PiholeApiClient,
     domain: str,
@@ -153,6 +155,7 @@ def add_domain(
         raise PiholeApiError(
             f"Failed to add domain '{domain}' as {domain_type}/{domain_kind}: {e}"
         )
+
 
 def update_domain(
     client: PiholeApiClient,
@@ -243,6 +246,7 @@ def update_domain(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to update domain '{domain}': {e}")
+
 
 def delete_domain(
     client: PiholeApiClient, domain: str, domain_type: str, domain_kind: str

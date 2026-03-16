@@ -4,7 +4,9 @@ from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from ansible_collections.wzzrd.pihole.plugins.modules.group import main
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import PiholeAuthError
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+)
 
 BASE = "ansible_collections.wzzrd.pihole.plugins.modules.group"
 
@@ -78,8 +80,9 @@ class TestGroupModulePresent:
 
     def test_exists_check_mode_needs_update_no_call(self):
         params = {**BASE_PARAMS, "comment": "changed"}
-        result, _, mock_update, _ = _run(existing=EXISTING_GROUP, params=params,
-                                         check_mode=True)
+        result, _, mock_update, _ = _run(
+            existing=EXISTING_GROUP, params=params, check_mode=True
+        )
         assert result.get("changed") is True
         mock_update.assert_not_called()
 
@@ -97,8 +100,12 @@ class TestGroupModuleAbsent:
         mock_mod.params = BASE_PARAMS
         mock_mod.check_mode = False
         result = {}
-        mock_mod.fail_json.side_effect = lambda **kw: (result.update({"_failed": True, **kw})) or (_ for _ in ()).throw(SystemExit(1))
-        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(SystemExit(0))
+        mock_mod.fail_json.side_effect = lambda **kw: (
+            result.update({"_failed": True, **kw})
+        ) or (_ for _ in ()).throw(SystemExit(1))
+        mock_mod.exit_json.side_effect = lambda **kw: (_ for _ in ()).throw(
+            SystemExit(0)
+        )
 
         with patch(f"{BASE}.AnsibleModule", return_value=mock_mod):
             with patch(f"{BASE}.PiholeApiClient", return_value=MagicMock()):

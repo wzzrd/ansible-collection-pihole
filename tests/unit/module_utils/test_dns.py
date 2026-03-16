@@ -231,7 +231,11 @@ class TestParseDnsRecords:
     def test_preserves_order(self):
         raw = ["1.1.1.1 a.local", "2.2.2.2 b.local", "3.3.3.3 c.local"]
         result = parse_dns_records(raw)
-        assert result == [("1.1.1.1", "a.local"), ("2.2.2.2", "b.local"), ("3.3.3.3", "c.local")]
+        assert result == [
+            ("1.1.1.1", "a.local"),
+            ("2.2.2.2", "b.local"),
+            ("3.3.3.3", "c.local"),
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -275,8 +279,8 @@ class TestFindConflictingDnsRecords:
 
     def test_multiple_conflicts_returned(self):
         records = [
-            ("1.2.3.4", "other.local"),   # same IP, different name
-            ("5.6.7.8", "host.local"),    # same name (both IPv4), different IP
+            ("1.2.3.4", "other.local"),  # same IP, different name
+            ("5.6.7.8", "host.local"),  # same name (both IPv4), different IP
             ("9.0.0.1", "unrelated.local"),  # no conflict
         ]
         result = find_conflicting_dns_records(records, "1.2.3.4", "host.local")

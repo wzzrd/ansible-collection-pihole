@@ -4,7 +4,9 @@ from contextlib import ExitStack
 from unittest.mock import MagicMock, patch
 
 from ansible_collections.wzzrd.pihole.plugins.modules.action import main
-from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import PiholeAuthError
+from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
+    PiholeAuthError,
+)
 
 BASE = "ansible_collections.wzzrd.pihole.plugins.modules.action"
 
@@ -54,5 +56,7 @@ class TestActionModule:
         mock_perform.assert_not_called()
 
     def test_auth_error_calls_fail_json(self):
-        result = _run(perform_action=MagicMock(side_effect=PiholeAuthError("unauth", 401)))
+        result = _run(
+            perform_action=MagicMock(side_effect=PiholeAuthError("unauth", 401))
+        )
         assert result.get("_failed") is True

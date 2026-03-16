@@ -13,7 +13,6 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
 )
 from .helpers import make_response as _make_response, mock_client as _mock_client
 
-
 # ---------------------------------------------------------------------------
 # perform_action
 # ---------------------------------------------------------------------------

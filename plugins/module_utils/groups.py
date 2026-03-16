@@ -26,6 +26,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeValidationError,
 )
 
+
 def get_groups(client: PiholeApiClient) -> dict[str, int]:
     """
     Retrieve all groups and map names to IDs.
@@ -57,6 +58,7 @@ def get_groups(client: PiholeApiClient) -> dict[str, int]:
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve groups: {e}")
+
 
 def get_group(client: PiholeApiClient, name: str) -> dict[str, Any] | None:
     """
@@ -92,6 +94,7 @@ def get_group(client: PiholeApiClient, name: str) -> dict[str, Any] | None:
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve group '{name}': {e}")
 
+
 def add_group(
     client: PiholeApiClient, name: str, comment: str = "", enabled: bool = True
 ) -> dict[str, Any]:
@@ -123,6 +126,7 @@ def add_group(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to add group '{name}': {e}")
+
 
 def update_group(
     client: PiholeApiClient,
@@ -179,6 +183,7 @@ def update_group(
     except Exception as e:
         raise PiholeApiError(f"Failed to update group '{name}': {e}")
 
+
 def delete_group(client: PiholeApiClient, name: str) -> dict[str, Any]:
     """
     Delete a group.
@@ -221,6 +226,7 @@ def delete_group(client: PiholeApiClient, name: str) -> dict[str, Any]:
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to delete group '{name}': {e}")
+
 
 def batch_delete_groups(
     client: PiholeApiClient, group_names: list[str]
@@ -284,6 +290,7 @@ def batch_delete_groups(
         raise
     except Exception as e:
         raise PiholeApiError(f"Failed to batch delete groups: {e}")
+
 
 def group_names_to_ids(client: PiholeApiClient, group_names: list[str]) -> list[int]:
     """

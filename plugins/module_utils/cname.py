@@ -24,6 +24,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeError,
 )
 
+
 def get_cname_records(client: PiholeApiClient) -> list[str]:
     """
     Get all CNAME records from Pi-hole.
@@ -56,6 +57,7 @@ def get_cname_records(client: PiholeApiClient) -> list[str]:
     except Exception as e:
         raise PiholeApiError(f"Failed to retrieve CNAME records: {e}")
 
+
 def check_cname_record_exists(client: PiholeApiClient, cname: str, target: str) -> bool:
     """
     Check if a specific CNAME record exists.
@@ -78,6 +80,7 @@ def check_cname_record_exists(client: PiholeApiClient, cname: str, target: str) 
     records = get_cname_records(client)
     record = f"{cname},{target}"
     return record in records
+
 
 def add_cname_record(
     client: PiholeApiClient, cname: str, target: str
@@ -116,9 +119,8 @@ def add_cname_record(
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to add CNAME record {cname} -> {target}: {e}"
-        )
+        raise PiholeApiError(f"Failed to add CNAME record {cname} -> {target}: {e}")
+
 
 def delete_cname_record(client: PiholeApiClient, cname: str, target: str) -> None:
     """
@@ -148,6 +150,4 @@ def delete_cname_record(client: PiholeApiClient, cname: str, target: str) -> Non
     except PiholeError:
         raise
     except Exception as e:
-        raise PiholeApiError(
-            f"Failed to delete CNAME record {cname} -> {target}: {e}"
-        )
+        raise PiholeApiError(f"Failed to delete CNAME record {cname} -> {target}: {e}")
