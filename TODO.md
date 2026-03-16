@@ -1,13 +1,5 @@
 # TODO — Pending improvement points
 
-## Major
-
-- **Add unit tests for the `modules/` layer**
-  All 269 tests currently cover `module_utils/` only. The module files contain
-  non-trivial logic: idempotence detection (`group.py`), multi-step state transitions
-  (`dns_record.py`), filter-then-batch (`batch_delete_groups.py`). None of it is
-  exercised at the module level.
-
 ## Medium
 
 - **Consolidate `_make_response()` / `_mock_client()` into `conftest.py`**

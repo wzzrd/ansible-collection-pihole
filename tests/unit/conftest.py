@@ -14,6 +14,7 @@ from pathlib import Path
 
 COLLECTION_ROOT = Path(__file__).parent.parent.parent
 MODULE_UTILS_DIR = COLLECTION_ROOT / "plugins" / "module_utils"
+MODULES_DIR = COLLECTION_ROOT / "plugins" / "modules"
 
 
 def _ensure_namespace(dotted_name: str) -> types.ModuleType:
@@ -24,6 +25,21 @@ def _ensure_namespace(dotted_name: str) -> types.ModuleType:
     mod.__path__ = []  # mark as package
     mod.__package__ = dotted_name
     sys.modules[dotted_name] = mod
+    return mod
+
+
+def _load_module(short_name: str) -> types.ModuleType:
+    """Load a modules file and register it under the collection namespace."""
+    full_name = f"ansible_collections.wzzrd.pihole.plugins.modules.{short_name}"
+    if full_name in sys.modules:
+        return sys.modules[full_name]
+
+    file_path = MODULES_DIR / f"{short_name}.py"
+    spec = importlib.util.spec_from_file_location(full_name, file_path)
+    mod = importlib.util.module_from_spec(spec)
+    mod.__package__ = "ansible_collections.wzzrd.pihole.plugins.modules"
+    sys.modules[full_name] = mod
+    spec.loader.exec_module(mod)
     return mod
 
 
@@ -50,6 +66,7 @@ for _ns in [
     "ansible_collections.wzzrd.pihole",
     "ansible_collections.wzzrd.pihole.plugins",
     "ansible_collections.wzzrd.pihole.plugins.module_utils",
+    "ansible_collections.wzzrd.pihole.plugins.modules",
 ]:
     _ensure_namespace(_ns)
 
@@ -68,3 +85,19 @@ for _mod in [
     "action",
 ]:
     _load_module_util(_mod)
+
+# Load modules in dependency order (module_utils must be loaded first).
+for _mod in [
+    "auth",
+    "action",
+    "blocking",
+    "group",
+    "batch_delete_groups",
+    "client",
+    "adlist",
+    "domain",
+    "dns_record",
+    "cname_record",
+    "dhcp_reservation",
+]:
+    _load_module(_mod)
