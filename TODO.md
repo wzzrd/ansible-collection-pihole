@@ -2,13 +2,6 @@
 
 ## Medium
 
-- **Simplify `group_names_to_ids()` deduplication (groups.py:332–338)**
-  The 6-line set+list loop is the verbose form of `list(dict.fromkeys(group_ids))`.
-
-- **Fix `delete_group()` exception re-raise losing traceback (groups.py:223–224)**
-  `except PiholeNotFoundError: raise PiholeNotFoundError(...)` creates a new exception,
-  dropping the original chain. Use bare `raise` or `raise ... from exc`.
-
 - **Remove silent fallback API call in `update_client()` (client.py:108–112)**
   When `group_ids` is `None`, `update_client()` silently issues an extra `GET` to fetch
   the current client. The comment acknowledges it "should not happen." Side-effects

@@ -220,8 +220,8 @@ def delete_group(client: PiholeApiClient, name: str) -> Dict[str, Any]:
                 "raw_response": response.text,
             }
 
-    except PiholeNotFoundError:
-        raise PiholeNotFoundError(f"Group '{name}' does not exist")
+    except PiholeNotFoundError as exc:
+        raise PiholeNotFoundError(f"Group '{name}' does not exist") from exc
     except PiholeError:
         raise
     except Exception as e:
@@ -328,12 +328,4 @@ def group_names_to_ids(client: PiholeApiClient, group_names: List[str]) -> List[
             f"The following groups do not exist: {', '.join(missing_groups)}"
         )
 
-    # Remove duplicates while preserving order
-    seen: Set[int] = set()
-    unique_group_ids: List[int] = []
-    for gid in group_ids:
-        if gid not in seen:
-            seen.add(gid)
-            unique_group_ids.append(gid)
-
-    return unique_group_ids
+    return list(dict.fromkeys(group_ids))
