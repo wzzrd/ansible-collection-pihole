@@ -13,6 +13,7 @@ in Pi-hole, including creating, checking, and deleting DNS entries.
 from __future__ import annotations
 
 import ipaddress
+import urllib.parse
 from typing import TYPE_CHECKING, Any, Dict, List, Tuple
 
 if TYPE_CHECKING:
@@ -107,8 +108,7 @@ def add_static_dns_record(
         ...     client, "192.168.1.10", "printer.local"
         ... )
     """
-    # URL encode the space as %20
-    record = f"{ip}%20{name}"
+    record = urllib.parse.quote(f"{ip} {name}", safe="")
 
     try:
         response = client._request("PUT", f"api/config/dns/hosts/{record}")
@@ -138,8 +138,7 @@ def delete_static_dns_record(client: PiholeApiClient, ip: str, name: str) -> Non
     Example:
         >>> delete_static_dns_record(client, "192.168.1.10", "printer.local")
     """
-    # URL encode the space as %20
-    record = f"{ip}%20{name}"
+    record = urllib.parse.quote(f"{ip} {name}", safe="")
 
     try:
         response = client._request("DELETE", f"api/config/dns/hosts/{record}")

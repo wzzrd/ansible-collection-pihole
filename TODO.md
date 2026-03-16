@@ -2,10 +2,6 @@
 
 ## Medium
 
-- **Replace manual `%20` URL encoding in `dns.py` and `dhcp.py`**
-  `dns.py:110,141` and `dhcp.py:113,148` build URLs with a raw `f"{ip}%20{name}"`
-  string. Every other module uses `urllib.parse.quote()`. Unify to the same approach.
-
 - **Simplify `group_names_to_ids()` deduplication (groups.py:332–338)**
   The 6-line set+list loop is the verbose form of `list(dict.fromkeys(group_ids))`.
 
