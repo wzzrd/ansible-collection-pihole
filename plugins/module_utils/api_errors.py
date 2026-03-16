@@ -12,10 +12,12 @@ Ansible collection for handling various error conditions.
 
 from __future__ import annotations
 
+
 class PiholeError(Exception):
     """Base exception class for all Pi-hole API errors."""
 
     pass
+
 
 class PiholeApiError(PiholeError):
     """
@@ -51,15 +53,18 @@ class PiholeApiError(PiholeError):
             return f"{self.args[0]} (HTTP {self.status_code})"
         return str(self.args[0])
 
+
 class PiholeAuthError(PiholeApiError):
     """Exception raised for authentication errors (401 Unauthorized)."""
 
     pass
 
+
 class PiholeNotFoundError(PiholeApiError):
     """Exception raised when a requested resource is not found (404 Not Found)."""
 
     pass
+
 
 class PiholeValidationError(PiholeError):
     """
@@ -69,6 +74,7 @@ class PiholeValidationError(PiholeError):
     """
 
     pass
+
 
 class PiholeConnectionError(PiholeError):
     """

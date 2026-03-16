@@ -29,6 +29,7 @@ from ansible_collections.wzzrd.pihole.plugins.module_utils.api_errors import (
     PiholeNotFoundError,
 )
 
+
 class PiholeResponse:
     """Minimal HTTP response wrapper matching the requests.Response interface."""
 
@@ -53,6 +54,7 @@ class PiholeResponse:
                 status_code=self.status_code,
                 response_text=self.text,
             )
+
 
 class PiholeApiClient:
     """
@@ -145,7 +147,7 @@ class PiholeApiClient:
                     f"Connection to {self.base_url} timed out after {request_timeout} seconds"
                 )
             raise PiholeConnectionError(
-                f"Failed to connect to {self.base_url}: {str(exc.reason)}"
+                f"Failed to connect to {self.base_url}: {exc.reason}"
             )
 
         except (
@@ -157,7 +159,7 @@ class PiholeApiClient:
             raise
 
         except Exception as exc:
-            raise PiholeApiError(f"Request error for {url}: {str(exc)}")
+            raise PiholeApiError(f"Request error for {url}: {exc}")
 
     @classmethod
     def authenticate(cls, base_url: str, password: str, timeout: int = 10) -> str:
@@ -217,7 +219,7 @@ class PiholeApiClient:
                     f"Connection to {auth_url} timed out after {timeout} seconds"
                 )
             raise PiholeConnectionError(
-                f"Failed to connect to {auth_url}: {str(exc.reason)}"
+                f"Failed to connect to {auth_url}: {exc.reason}"
             )
 
         except (PiholeAuthError, PiholeConnectionError, PiholeApiError):
@@ -225,8 +227,8 @@ class PiholeApiClient:
 
         except ValueError as exc:
             raise PiholeApiError(
-                f"Invalid JSON response during authentication: {str(exc)}"
+                f"Invalid JSON response during authentication: {exc}"
             )
 
         except Exception as exc:
-            raise PiholeApiError(f"Unexpected error during authentication: {str(exc)}")
+            raise PiholeApiError(f"Unexpected error during authentication: {exc}")

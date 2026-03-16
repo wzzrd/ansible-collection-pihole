@@ -80,18 +80,10 @@ def add_client(
         PiholeConnectionError: If connection fails
         PiholeApiError: For other API errors
     """
-    data: dict[str, Any] = {"client": client_id}
+    data: dict[str, Any] = {"client": client_id, "groups": group_ids if group_ids is not None else [0]}
 
-    # Only include 'comment' in the payload if it's explicitly provided (not None)
     if comment is not None:
         data["comment"] = comment
-
-    # group_ids are expected to be provided by the module (e.g. [0] for default)
-    if group_ids is not None:
-        data["groups"] = group_ids
-    else:
-        # Fallback, though module should always provide it for 'present' state
-        data["groups"] = [0]
 
     try:
         response = client._request("POST", "api/clients", json_data=data)
@@ -105,8 +97,8 @@ def add_client(
 def update_client(
     client: PiholeApiClient,
     client_id: str,
-    comment: str | None = None,  # This is comment_param from the module
-    group_ids: list[int] | None = None,
+    group_ids: list[int],
+    comment: str | None = None,
 ) -> dict[str, Any]:
     """
     Update an existing client configuration.
@@ -114,8 +106,8 @@ def update_client(
     Args:
         client: Initialized Pi-hole API client
         client_id: IP address, MAC address, hostname, or interface of the client
+        group_ids: New list of group IDs to assign (caller must resolve these before calling)
         comment: New comment (None omits the field, preserving the existing value)
-        group_ids: New list of group IDs (None triggers a fallback GET to preserve existing)
 
     Returns:
         API response containing the updated client
@@ -125,28 +117,12 @@ def update_client(
         PiholeConnectionError: If connection fails
         PiholeApiError: For other API errors
     """
-    # URL encode the client identifier
     encoded_client = urllib.parse.quote(client_id)
 
-    data: dict[str, Any] = {}
+    data: dict[str, Any] = {"groups": group_ids}
 
-    # Only include 'comment' in the PUT payload if it's explicitly provided (not None)
-    # If comment_param was None in the module, 'comment' here will be None,
-    # and the field will be omitted from the API call, preserving the existing comment.
     if comment is not None:
         data["comment"] = comment
-
-    # group_ids are expected to be provided by the module
-    if group_ids is not None:
-        data["groups"] = group_ids
-    else:
-        # Should not happen if module logic is correct; update needs explicit groups.
-        # As a safety, fetch current if not provided, though module aims to provide desired state.
-        current_client_data = get_client(client, client_id)
-        if current_client_data:
-            data["groups"] = current_client_data.get("groups", [0])
-        else:  # Should have been caught by module if client doesn't exist
-            data["groups"] = [0]
 
     try:
         response = client._request(
