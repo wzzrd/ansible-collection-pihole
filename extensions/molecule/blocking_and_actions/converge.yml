@@ -91,6 +91,10 @@
         that: _restartdns.changed
         fail_msg: "restartdns action should always report changed=true."
 
+    - name: Wait for startup after restartdns
+      ansible.builtin.pause:
+        seconds: 3
+
     - name: Flush Pi-hole DNS logs
       wzzrd.pihole.action:
         pihole: "{{ pihole_url }}"
@@ -103,7 +107,7 @@
         that: _flush_logs.changed
         fail_msg: "flush_logs action should always report changed=true."
 
-    - name: wait
+    - name: Wait for restart after flush_logs
       ansible.builtin.pause:
         seconds: 3
 
@@ -118,6 +122,10 @@
       ansible.builtin.assert:
         that: _flush_arp.changed
         fail_msg: "flush_arp action should always report changed=true."
+
+    - name: Wait for restart after flush_arp
+      ansible.builtin.pause:
+        seconds: 3
 
     - name: Update gravity (download adlists)
       wzzrd.pihole.action:
