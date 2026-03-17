@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.6 (2026-03-15)
+
+### Improvements
+- Updated the README to reflect changes outlined below
+
 ## v1.0.5 (2026-03-16)
 
 ### CI

@@ -13,7 +13,7 @@ An Ansible collection for managing Pi-hole DNS servers through their v6 API.
 | | `wzzrd.pihole.blocking` | Enable or disable DNS blocking |
 | **Client/Group** | `wzzrd.pihole.group` | Create, rename, enable/disable groups |
 | | `wzzrd.pihole.client` | Manage clients (IP, MAC, hostname, CIDR) |
-| | `wzzrd.pihole.group_batch_delete` | Delete multiple groups at once |
+| | `wzzrd.pihole.batch_delete_groups` | Delete multiple groups at once |
 | **DNS** | `wzzrd.pihole.dns_record` | Static A/AAAA records |
 | | `wzzrd.pihole.cname_record` | CNAME alias records |
 | | `wzzrd.pihole.dhcp_reservation` | Static DHCP leases |
@@ -24,7 +24,6 @@ An Ansible collection for managing Pi-hole DNS servers through their v6 API.
 
 - Python 3.8+
 - Ansible 2.16.12+
-- Python `requests` library
 - Pi-hole v6.0+
 
 Tested with:
@@ -216,7 +215,7 @@ Manage Pi-hole clients. Clients can be identified by IPv4, IPv6, MAC address, ho
 
 ---
 
-### `wzzrd.pihole.group_batch_delete`
+### `wzzrd.pihole.batch_delete_groups`
 
 Delete multiple groups in a single operation.
 
@@ -228,7 +227,7 @@ Delete multiple groups in a single operation.
 
 ```yaml
 - name: Remove temporary groups
-  wzzrd.pihole.group_batch_delete:
+  wzzrd.pihole.batch_delete_groups:
     pihole: "https://pihole.acme.lab"
     sid: "{{ pihole_sid }}"
     names:
@@ -566,7 +565,7 @@ This collection is developed on [Gitea](https://git.wzzrd.com/wzzrd/ansible-coll
 
 ## License
 
-GPL-2.0-or-later
+GPL-3.0-or-later
 
 ## Author
 
