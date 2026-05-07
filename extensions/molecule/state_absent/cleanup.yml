@@ -9,4 +9,4 @@
   tasks:
     - name: Nothing to clean up for state_absent
       ansible.builtin.debug:
-        msg: "Cleanup complete – all resources were removed by converge. Container will be destroyed."
+        msg: "Cleanup complete – all resources were removed by converge. Shared Pi-hole container continues running."

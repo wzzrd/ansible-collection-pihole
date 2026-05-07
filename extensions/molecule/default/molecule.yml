@@ -1,0 +1,42 @@
+# Default scenario – shared infrastructure for all wzzrd.pihole Molecule scenarios.
+#
+# This scenario only manages the lifecycle of the shared Pi-hole container.
+# All other scenarios (dns_dhcp, blocklists, blocking_and_actions, state_absent,
+# batch_delete_groups) reuse this container via shared_state: true in config.yml.
+#
+# Usage:
+#   molecule test --all --shared-state
+#
+# To run a single child scenario against the already-running container:
+#   molecule create -s default
+#   molecule converge -s dns_dhcp
+#   molecule destroy -s default
+driver:
+  name: podman
+platforms:
+  - name: pihole
+    image: "docker.io/pihole/pihole:${PIHOLE_VERSION:-latest}"
+    pre_build_image: true
+    env:
+      FTLCONF_webserver_api_password: "molecule_test_password"
+      FTLCONF_dns_upstreams: "8.8.8.8;8.8.4.4"
+      FTLCONF_dns_listeningMode: ALL
+      FTLCONF_dhcp_active: "true"
+      FTLCONF_dhcp_start: 192.168.88.2
+      FTLCONF_dhcp_end: 192.168.88.250
+      FTLCONF_dhcp_router: 192.168.88.1
+      FTLCONF_dhcp_netmask: 255.255.255.0
+      FTLCONF_dns_domain_name: acme.lab
+      TZ: "UTC"
+      FTLCONF_webserver_api_max_sessions: 1000
+    published_ports:
+      - "127.0.0.1:8080:80/tcp"
+    capabilities:
+      - NET_ADMIN
+      - NET_RAW
+      - CAP_SETUID
+      - CAP_SETGID
+scenario:
+  test_sequence:
+    - create
+    - destroy

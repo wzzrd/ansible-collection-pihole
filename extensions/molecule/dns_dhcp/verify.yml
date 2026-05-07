@@ -12,9 +12,6 @@
   vars:
     ansible_python_interpreter: "{{ ansible_playbook_python }}"
 
-    pihole_url: "http://localhost:8080"
-    pihole_password: "molecule_test_password"
-
     dhcp_reservations:
       - hw: "de:ad:be:ef:00:01"
         ip: "192.168.88.10"

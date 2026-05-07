@@ -7,10 +7,6 @@
   connection: local
   gather_facts: false
 
-  vars:
-    pihole_url: "http://localhost:8082"
-    pihole_password: "molecule_test_password"
-
   tasks:
     - name: Wait for Pi-hole API to become reachable
       ansible.builtin.uri:

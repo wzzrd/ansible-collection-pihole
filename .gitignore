@@ -4,3 +4,4 @@ __pycache__
 .ansible
 .claude
 .envrc
+.helix

@@ -1,0 +1,28 @@
+# Shared molecule configuration for wzzrd.pihole collection testing
+
+ansible:
+  executor:
+    args:
+      ansible_playbook:
+        - --inventory=${MOLECULE_PROJECT_DIRECTORY}/extensions/molecule/inventory.yml
+
+  env:
+    ANSIBLE_FORCE_COLOR: "true"
+    ANSIBLE_DEPRECATION_WARNINGS: "false"
+    ANSIBLE_SYSTEM_WARNINGS: "false"
+    ANSIBLE_COMMAND_WARNINGS: "false"
+
+scenario:
+  test_sequence:
+    - dependency
+    - prepare
+    - converge
+    - verify
+    - idempotence
+    - verify
+    - cleanup
+
+shared_state: true
+
+verifier:
+  name: ansible
