@@ -55,7 +55,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install test dependencies
-        run: pip-3.11 install -r tests/requirements.txt
+        run: pip-3.12 install -r tests/requirements.txt
 
       - name: Run pytest
         run: pytest tests/unit/ -v --tb=short --color=yes
@@ -71,14 +71,14 @@ jobs:
         run: black --check plugins/ tests/
 
   molecule:
-    name: Integration Tests (Molecule) - ${{ matrix.scenario }}
+    name: Integration Tests (Molecule)
     runs-on: ubi9-aarch64-ansible
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
       - name: Install Python dependencies
-        run: pip-3.11 install -r tests/requirements.txt
+        run: pip-3.12 install -r tests/requirements.txt
 
       - name: Run Molecule tests
         run: molecule test --all --shared-state --report --command-borders
