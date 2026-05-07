@@ -71,17 +71,8 @@ jobs:
         run: black --check plugins/ tests/
 
   molecule:
-    name: Integration Tests (Molecule) – ${{ matrix.scenario }}
+    name: Integration Tests (Molecule) - ${{ matrix.scenario }}
     runs-on: ubi9-aarch64-ansible
-    strategy:
-      fail-fast: false
-      matrix:
-        scenario:
-          - dns_dhcp
-          - blocklists
-          - batch_delete_groups
-          - blocking_and_actions
-          - state_absent
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -90,7 +81,7 @@ jobs:
         run: pip-3.11 install -r tests/requirements.txt
 
       - name: Run Molecule tests
-        run: molecule test --scenario-name ${{ matrix.scenario }} --report --command-borders
+        run: molecule test --all --shared-state --report --command-borders
         env:
           ANSIBLE_ASYNC_DIR: /tmp/.ansible_async
           ANSIBLE_FORCE_COLOR: '1'
