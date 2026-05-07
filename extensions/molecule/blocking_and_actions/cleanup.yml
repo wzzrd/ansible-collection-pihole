@@ -9,4 +9,4 @@
   tasks:
     - name: Nothing to clean up for blocking_and_actions
       ansible.builtin.debug:
-        msg: "Cleanup complete – container will be destroyed by molecule."
+        msg: "Cleanup complete – shared Pi-hole container continues running for subsequent scenarios."

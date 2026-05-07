@@ -1,0 +1,13 @@
+---
+# Shared inventory for wzzrd.pihole Molecule testing
+all:
+  vars:
+    pihole_url: "http://localhost:8080"
+    pihole_password: "molecule_test_password"
+    molecule_debug: true
+  children:
+    local:
+      hosts:
+        localhost:
+          ansible_connection: local
+          ansible_python_interpreter: "{{ ansible_playbook_python }}"

@@ -10,11 +10,6 @@
   connection: local
   gather_facts: false
 
-  vars:
-    ansible_python_interpreter: "{{ ansible_playbook_python }}"
-    pihole_url: "http://localhost:8083"
-    pihole_password: "molecule_test_password"
-
   tasks:
     # ------------------------------------------------------------------ #
     # Authentication                                                       #
@@ -27,6 +22,7 @@
       no_log: "{{ not (molecule_debug | default(false)) }}"
       retries: 5
       delay: 5
+      until: auth_result is not failed
 
     # ------------------------------------------------------------------ #
     # Idempotency checks (check_mode – should all report changed=false)   #

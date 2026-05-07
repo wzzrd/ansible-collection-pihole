@@ -1,0 +1,128 @@
+---
+- name: Create
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  no_log: "{{ molecule_no_log }}"
+  become: "{{ not (item.rootless | default(true)) }}"
+  vars:
+    podman_exec: "{{ lookup('env','MOLECULE_PODMAN_EXECUTABLE') | default('podman', true) }}"
+  tasks:
+    - name: Log into a container registry
+      containers.podman.podman_login:
+        certdir: >-
+          {% if lookup('env', 'DOCKER_CERT_PATH') %}
+          {{ item.cert_path | default(lookup('env', 'DOCKER_CERT_PATH') + '/cert.pem') }}
+          {% endif %}
+        executable: "{{ podman_exec }}"
+        username: "{{ item.registry.credentials.username }}"
+        password: "{{ item.registry.credentials.password }}"
+        registry: "{{ item.registry.url }}"
+        tlsverify: "{{ item.registry.tls_verify | default(lookup('env', 'DOCKER_TLS_VERIFY')) or false }}"
+      loop: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: >-
+          "{{ item.name }} registry username:
+          {{ item.registry.credentials.username | default('None specified') }}"
+      when:
+        - item.registry is defined
+        - item.registry.url is truthy
+        - item.registry.credentials is defined
+        - item.registry.credentials.username is defined
+      changed_when: false
+
+    - name: Determine the CMD directives
+      ansible.builtin.set_fact:
+        command_directives_dict: >-
+          {{ command_directives_dict | default({}) |
+             combine({item.name: item.command | default(["bash", "-c", "while true; do sleep 10000; done"])})
+          }}
+      with_items: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: >-
+          "{{ item.name }} command:
+          {{ item.command | default('None specified') }}"
+      when: item.override_command | default(true)
+
+    - name: Discover local podman networks
+      containers.podman.podman_network_info:
+        name: "{{ item.network }}"
+        executable: "{{ podman_exec }}"
+      loop: "{{ molecule_yml.platforms | flatten(levels=1) }}"
+      loop_control:
+        extended: true
+        label: "{{ item.name }}: {{ item.network | default('None specified') }}"
+      register: podman_network
+      when:
+        - item.network is defined
+        - ansible_loop.first
+      failed_when: false
+
+    - name: Create podman network dedicated to this scenario
+      containers.podman.podman_network:
+        name: "{{ podman_network.results[0].ansible_loop.allitems[0].network }}"
+        executable: "{{ podman_exec }}"
+        subnet: "{{ podman_network.results[0].ansible_loop.allitems[0].subnet | default(omit) }}"
+      when:
+        - podman_network.results[0].msg is defined
+        # podman message changed at some point in time
+        - "'no such network' in podman_network.results[0].msg or 'network not found' in podman_network.results[0].msg"
+        - podman_network.results[0].networks is undefined
+        - "podman_network.results[0].ansible_loop.allitems[0].network not in ['bridge', 'none', 'host', 'ns', 'private', 'slirp4netns']"
+
+    - name: Create molecule instance(s)
+      containers.podman.podman_container:
+        name: "{{ item.name }}"
+        cap_add: "{{ item.capabilities | default(omit) }}"
+        cmd_args: "{{ molecule_podman_args | reject('none') | reject('equalto', '') | list + item.extra_opts | default([]) }}"
+        command: "{{ (command_directives_dict | default({}))[item.name] | default('') }}"
+        detach: "{{ item.detach | default(omit) }}"
+        device: "{{ item.devices | default(omit) }}"
+        dns: "{{ item.dns_servers | default(omit) }}"
+        env: "{{ item.env | default(omit) }}"
+        etc_hosts: "{{ item.etc_hosts | default(omit) }}"
+        executable: "{{ podman_exec }}"
+        expose: "{{ item.exposed_ports | default(omit) }}"
+        hostname: "{{ item.hostname | default(item.name) }}"
+        image: "{{ item.pre_build_image | default(false) | ternary('', 'molecule_local/') }}{{ item.image }}"
+        ip: "{{ item.ip | default(omit) }}"
+        label:
+          owner: "molecule" # keep in sync with ../driver.py:Podman.reset()
+        network: "{{ item.network | default(omit) }}"
+        pid: "{{ item.pid_mode | default(omit) }}"
+        privileged: "{{ item.privileged | default(omit) }}"
+        publish: "{{ item.published_ports | default(omit) }}"
+        security_opt: "{{ item.security_opts | default(omit) }}"
+        systemd: "{{ item.systemd | default(omit) }}"
+        tmpfs: "{{ item.tmpfs | default(omit) }}"
+        tty: "{{ item.tty | default(omit) }}"
+        ulimits: "{{ item.ulimits | default(omit) }}"
+        volume: "{{ item.volumes | default(omit) }}"
+        state: started
+      register: server
+      changed_when: false
+      with_items: "{{ molecule_yml.platforms }}"
+      loop_control:
+        label: "{{ item.name }}"
+      async: 7200
+      poll: 0
+      vars:
+        molecule_podman_args:
+          - "{% if item.cgroup_manager is defined %}--cgroup-manager={{ item.cgroup_manager }}{% endif %}"
+          - >-
+            {% if item.restart_policy is defined %}
+            --restart={{ item.restart_policy }}{% if item.restart_retries is defined %}:{{ item.restart_retries }}{% endif %}
+            {% endif %}
+          - "{% if item.storage_opt is defined %}--storage-opt={{ item.storage_opt }}{% endif %}"
+          - "{% if item.storage_driver is defined %}--storage-driver={{ item.storage_driver }}{% endif %}"
+
+    - name: Wait for instance(s) creation to complete
+      become: "{{ not item.item.rootless | default(omit) }}"
+      ansible.builtin.async_status:
+        jid: "{{ item.ansible_job_id }}"
+      register: podman_jobs
+      until: podman_jobs is finished
+      retries: 300
+      with_items: "{{ server.results }}"
+      loop_control:
+        label: "{{ item.item.name | default('Unnamed') }}"

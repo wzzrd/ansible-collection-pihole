@@ -9,4 +9,4 @@
   tasks:
     - name: Nothing to clean up for batch_delete_groups
       ansible.builtin.debug:
-        msg: "Cleanup complete – all test groups were removed by converge. Container will be destroyed."
+        msg: "Cleanup complete – all test groups were removed by converge. Shared Pi-hole container continues running."

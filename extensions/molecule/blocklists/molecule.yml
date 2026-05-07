@@ -2,18 +2,14 @@
 # Molecule scenario: blocklists
 #
 # Tests groups, clients, adlists (block/allow) and individual domain
-# entries (allow/deny, exact/regex) against a real Pi-hole in Docker.
+# entries (allow/deny, exact/regex) against the shared Pi-hole instance.
 #
-# Requirements:
-#   pip install molecule molecule-plugins[docker]
-#
-# The wzzrd.pihole collection must be reachable by Ansible.
-# Install it to the default path before running:
-#   ansible-galaxy collection install . --upgrade
+# Infrastructure is provided by the default scenario (shared_state: true).
+# Idempotence is omitted: gravity-related list operations are not idempotent.
 #
 # Usage:
-#   molecule test -s blocklists
-#   PIHOLE_VERSION=2024.07.0 molecule test -s blocklists
+#   molecule test --all --shared-state
+#   PIHOLE_VERSION=2024.07.0 molecule test --all --shared-state
 
 dependency:
   name: galaxy
@@ -25,37 +21,11 @@ dependency:
 driver:
   name: podman
 
-platforms:
-  - name: pihole-blocklists
-    image: "docker.io/pihole/pihole:${PIHOLE_VERSION:-latest}"
-    env:
-      FTLCONF_webserver_api_password: "molecule_test_password"
-      FTLCONF_dns_upstreams: "8.8.8.8;8.8.4.4"
-      FTLCONF_dns_listeningMode: ALL
-      TZ: "UTC"
-    published_ports:
-      - "127.0.0.1:8081:80/tcp"
-    capabilities:
-      - NET_ADMIN
-
 provisioner:
   name: ansible
   log: true
   env:
     ANSIBLE_COLLECTIONS_PATHS: "${HOME}/.ansible/collections:/usr/share/ansible/collections"
-  inventory:
-    hosts:
-      all:
-        hosts:
-          localhost:
-            ansible_connection: local
-            pihole_url: "http://localhost:8081"
-            pihole_password: "molecule_test_password"
-            molecule_debug: true
-  playbooks:
-    prepare: prepare.yml
-    converge: converge.yml
-    verify: verify.yml
 
 verifier:
   name: ansible
@@ -64,9 +34,7 @@ scenario:
   name: blocklists
   test_sequence:
     - dependency
-    - create
     - prepare
     - converge
     - verify
     - cleanup
-    - destroy
