@@ -80,6 +80,14 @@ jobs:
       - name: Install Python dependencies
         run: pip-3.12 install -r tests/requirements.txt
 
+      - name: Install Molecule dependencies
+        run: molecule dependency
+        env:
+          ANSIBLE_ASYNC_DIR: /tmp/.ansible_async
+          ANSIBLE_FORCE_COLOR: '1'
+          MOLECULE_PODMAN_EXECUTABLE: /usr/local/bin/podman-wrapper
+          PY_COLORS: '1'
+
       - name: Run Molecule tests
         run: molecule test --all --shared-state --report --command-borders
         env:
