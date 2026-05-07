@@ -38,5 +38,6 @@ platforms:
       - CAP_SETGID
 scenario:
   test_sequence:
+    - dependency
     - create
     - destroy
